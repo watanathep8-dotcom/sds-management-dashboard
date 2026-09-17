@@ -10,7 +10,8 @@ var SDS_HEADERS = [
   "id", "chemical", "cas", "supplier", "revision", "revisionDate",
   "status", "signalWord", "hazards", "pdfFileId", "pdfName", "updatedAt",
   "reviewDate", "thaiSds", "language", "flashPoint", "emergencyResponse", "sdsLanguages",
-  "chemicalThai", "chemicalEnglish"
+  "chemicalThai", "chemicalEnglish", "thaiPdfFileId", "thaiPdfName",
+  "englishPdfFileId", "englishPdfName", "pdfUrl", "thaiPdfUrl", "englishPdfUrl"
 ];
 
 // New installations start empty. SDS records are added by the administrator.
@@ -93,6 +94,112 @@ function setupSystem() {
   };
 }
 
+/**
+ * Imports the 98-record catalog published with the GitHub dashboard into the
+ * new Google Sheet. PDF links remain public GitHub asset links so viewers do
+ * not need to sign in to Google Drive. Thai and English links are kept
+ * separately for the QR-language chooser.
+ *
+ * Run once after setupSystem(). It is idempotent by record id.
+ */
+function migrateCatalogFromGithub() {
+  assertAdmin_();
+  var sourceUrl = "https://raw.githubusercontent.com/mojikenso-sketch/sds-management-dashboard/main/docs/index.html";
+  var response = UrlFetchApp.fetch(sourceUrl, { muteHttpExceptions: true });
+  if (response.getResponseCode() !== 200) {
+    throw new Error("โหลด catalog จาก GitHub ไม่สำเร็จ: HTTP " + response.getResponseCode());
+  }
+
+  var html = response.getContentText();
+  var dataMatch = html.match(/const defaultData = (\[[\s\S]*?\n\]);/);
+  if (!dataMatch) throw new Error("ไม่พบ defaultData ใน GitHub catalog");
+  var records = JSON.parse(dataMatch[1]);
+
+  var thaiNames = {};
+  var namesMatch = html.match(/const thaiChemicalNames = (\{[\s\S]*?\n  \});/);
+  if (namesMatch) {
+    try { thaiNames = JSON.parse(namesMatch[1]); } catch (ignored) {}
+  }
+
+  var sheet = getSheet_();
+  var lastRow = sheet.getLastRow();
+  var existing = {};
+  if (lastRow >= 2) {
+    var current = sheet.getRange(2, 1, lastRow - 1, SDS_HEADERS.length).getValues();
+    current.forEach(function(row, index) {
+      if (row[0] !== "" && row[0] !== null) existing[String(row[0])] = index + 2;
+    });
+  }
+
+  var rowsToAppend = [];
+  var imported = 0;
+  var englishPdfLinks = 0;
+  var thaiPdfLinks = 0;
+  var updatedAt = new Date().toISOString();
+
+  records.forEach(function(seed) {
+    var id = String(seed.id || "");
+    if (!id) return;
+    var chemicalEnglish = clean_(seed.chemicalEnglish || seed.chemical || seed.chemicalThai);
+    var chemicalThai = clean_(seed.chemicalThai || thaiNames[seed.chemical] || chemicalEnglish);
+    var englishPdfUrl = clean_(seed.englishPdfUrl || seed.pdfUrl);
+    var thaiPdfUrl = clean_(seed.thaiPdfUrl);
+    var englishPdfName = clean_(seed.englishPdfName || seed.pdfName);
+    var thaiPdfName = clean_(seed.thaiPdfName);
+    var language = clean_(seed.language) === "Thai" ? "Thai" : "English";
+    var sdsLanguages = normalizeLanguages_(seed.sdsLanguages, language, seed.thaiSds === true);
+    var row = [
+      id,
+      chemicalEnglish,
+      clean_(seed.cas),
+      clean_(seed.supplier),
+      clean_(seed.revision),
+      clean_(seed.revisionDate),
+      normalizeStatus_(seed.status),
+      clean_(seed.signalWord),
+      (Array.isArray(seed.hazards) ? seed.hazards : []).map(clean_).filter(String).slice(0, 1).join("|"),
+      "",
+      englishPdfName,
+      updatedAt,
+      clean_(seed.reviewDate),
+      seed.thaiSds === true,
+      language,
+      clean_(seed.flashPoint),
+      clean_(seed.emergencyResponse),
+      sdsLanguages.join("|"),
+      chemicalThai,
+      chemicalEnglish,
+      "",
+      thaiPdfName,
+      "",
+      englishPdfName,
+      englishPdfUrl,
+      thaiPdfUrl,
+      englishPdfUrl
+    ];
+
+    if (existing[id]) sheet.getRange(existing[id], 1, 1, SDS_HEADERS.length).setValues([row]);
+    else rowsToAppend.push(row);
+    imported += 1;
+    if (englishPdfUrl) englishPdfLinks += 1;
+    if (thaiPdfUrl) thaiPdfLinks += 1;
+  });
+
+  if (rowsToAppend.length) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAppend.length, SDS_HEADERS.length).setValues(rowsToAppend);
+  }
+  sheet.autoResizeColumns(1, SDS_HEADERS.length);
+
+  return {
+    imported: imported,
+    appended: rowsToAppend.length,
+    englishPdfLinks: englishPdfLinks,
+    thaiPdfLinks: thaiPdfLinks,
+    totalInSheet: listSds().length,
+    source: sourceUrl
+  };
+}
+
 function listSds() {
   var sheet = getSheet_();
   var lastRow = sheet.getLastRow();
@@ -135,6 +242,13 @@ function saveSds(record, fileData) {
     var oldRow = existing ? sheet.getRange(existing, 1, 1, SDS_HEADERS.length).getValues()[0] : null;
     var pdfFileId = oldRow ? String(oldRow[9] || "") : "";
     var pdfName = oldRow ? String(oldRow[10] || "") : "";
+    var thaiPdfFileId = oldRow ? String(oldRow[20] || "") : "";
+    var thaiPdfName = oldRow ? String(oldRow[21] || "") : "";
+    var englishPdfFileId = oldRow ? String(oldRow[22] || "") : "";
+    var englishPdfName = oldRow ? String(oldRow[23] || "") : "";
+    var pdfUrl = oldRow ? String(oldRow[24] || "") : "";
+    var thaiPdfUrl = oldRow ? String(oldRow[25] || "") : "";
+    var englishPdfUrl = oldRow ? String(oldRow[26] || "") : "";
 
     if (fileData && fileData.base64) {
       var folder = getFolder_();
@@ -153,6 +267,10 @@ function saveSds(record, fileData) {
       }
       pdfFileId = file.getId();
       pdfName = file.getName();
+      englishPdfFileId = pdfFileId;
+      englishPdfName = pdfName;
+      pdfUrl = "";
+      englishPdfUrl = "";
     }
 
     var row = [
@@ -175,7 +293,14 @@ function saveSds(record, fileData) {
       normalized.emergencyResponse,
       normalized.sdsLanguages.join("|"),
       normalized.chemicalThai,
-      normalized.chemicalEnglish
+      normalized.chemicalEnglish,
+      thaiPdfFileId,
+      thaiPdfName,
+      englishPdfFileId,
+      englishPdfName,
+      pdfUrl,
+      thaiPdfUrl,
+      englishPdfUrl
     ];
 
     if (existing) {
@@ -290,6 +415,7 @@ function normalizeLanguages_(value, language, thaiSds) {
 
 function rowToObject_(row) {
   var fileId = String(row[9] || "");
+  var storedPdfUrl = String(row[24] || "");
   var legacyChemical = String(row[1] || "");
   var chemicalThai = String(row[18] || "");
   var chemicalEnglish = String(row[19] || "");
@@ -315,7 +441,13 @@ function rowToObject_(row) {
     hazards: String(row[8] || "").split("|").filter(String).slice(0, 1),
     pdfFileId: fileId,
     pdfName: String(row[10] || ""),
-    pdfUrl: fileId ? "https://drive.google.com/file/d/" + encodeURIComponent(fileId) + "/preview" : "",
+    pdfUrl: storedPdfUrl || (fileId ? "https://drive.google.com/file/d/" + encodeURIComponent(fileId) + "/preview" : ""),
+    thaiPdfFileId: String(row[20] || ""),
+    thaiPdfName: String(row[21] || ""),
+    englishPdfFileId: String(row[22] || ""),
+    englishPdfName: String(row[23] || ""),
+    thaiPdfUrl: String(row[25] || ""),
+    englishPdfUrl: String(row[26] || ""),
     updatedAt: String(row[11] || ""),
     reviewDate: formatDateValue_(row[12]),
     thaiSds: thaiSds,

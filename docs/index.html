@@ -5095,35 +5095,29 @@
     }
 
     function loadFromRemoteApi() {
-      return new Promise(function (resolve, reject) {
-        var callback = "sdsJsonp_" + Date.now();
-        var script = document.createElement("script");
-        var url = new URL(apiUrl, window.location.href);
-        url.searchParams.set("action", "api");
-        url.searchParams.set("callback", callback);
-        url.searchParams.set("_", String(Date.now()));
+      var requestUrl = new URL(apiUrl, window.location.href);
+      requestUrl.searchParams.set("action", "api");
+      requestUrl.searchParams.set("_", String(Date.now()));
 
-        window[callback] = function (response) {
-          try {
-            if (!response || response.ok === false) throw new Error(response && response.error || "API error");
-            applyData(response.data || []);
-            setConnectionStatus("โหมดดูข้อมูลสาธารณะ", "Public read-only mode");
-            resolve(response.data || []);
-          } catch (error) {
-            reject(error);
-          } finally {
-            delete window[callback];
-            script.remove();
-          }
-        };
-        script.onerror = function () {
-          delete window[callback];
-          script.remove();
-          reject(new Error("ไม่สามารถเชื่อมต่อ Apps Script API ได้"));
-        };
-        script.src = url.toString();
-        document.body.appendChild(script);
-      });
+      // Apps Script now returns CORS headers for the public API. Prefer a
+      // normal JSON request so signed-in Google sessions cannot rewrite the
+      // web-app URL to an account-scoped /macros/u/... route in some browsers.
+      return fetch(requestUrl.toString(), {
+        method: "GET",
+        mode: "cors",
+        credentials: "omit",
+        cache: "no-store"
+      })
+        .then(function (response) {
+          if (!response.ok) throw new Error("Apps Script API HTTP " + response.status);
+          return response.json();
+        })
+        .then(function (response) {
+          if (!response || response.ok === false) throw new Error(response && response.error || "API error");
+          applyData(response.data || []);
+          setConnectionStatus("โหมดดูข้อมูลสาธารณะ", "Public read-only mode");
+          return response.data || [];
+        });
     }
 
     function readFile(file) {
