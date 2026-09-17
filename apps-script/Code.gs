@@ -14,6 +14,10 @@ var SDS_HEADERS = [
   "englishPdfFileId", "englishPdfName", "pdfUrl", "thaiPdfUrl", "englishPdfUrl"
 ];
 
+// Destructive actions require a second confirmation in the dashboard and
+// this server-side check protects the API even if the browser is bypassed.
+var DELETE_PASSWORD = "121314";
+
 // New installations start empty. SDS records are added by the administrator.
 var SAMPLE_ROWS = [];
 
@@ -49,7 +53,7 @@ function doPost(e) {
     if (action === "save") {
       result = saveSds(payload.record || {}, payload.file || null);
     } else if (action === "delete") {
-      result = deleteSds(payload.id);
+      result = deleteSds(payload.id, payload.password);
     } else {
       throw new Error("ไม่รองรับคำสั่งนี้ / Unsupported action.");
     }
@@ -315,8 +319,11 @@ function saveSds(record, fileData) {
   }
 }
 
-function deleteSds(id) {
+function deleteSds(id, password) {
   assertAdmin_();
+  if (String(password || "") !== DELETE_PASSWORD) {
+    throw new Error("รหัสลบไม่ถูกต้อง / Invalid delete password.");
+  }
   var sheet = getSheet_();
   var rowNumber = findRowById_(sheet, id);
   if (!rowNumber) return { deleted: false };
