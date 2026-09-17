@@ -4315,7 +4315,21 @@
     openDrawer();
   }
 
-  function getDeletePassword() {    const password = window.prompt("กรุณาใส่รหัสก่อนลบข้อมูล / Enter delete password");    if (password === null) return null;    if (password !== "121314") {      window.alert("รหัสไม่ถูกต้อง ข้อมูลยังไม่ถูกลบ / Incorrect password. Nothing was deleted.");      return null;    }    return password;  }  async function deleteSDS(id) {    const item = sdsData.find(row => String(row.id) === String(id));    if (!item) return;    const password = getDeletePassword();    if (!password || !confirm("ต้องการลบ \"" + item.chemical + "\" หรือไม่?")) return;
+  function getDeletePassword() {
+    const password = window.prompt("กรุณาใส่รหัสก่อนลบข้อมูล / Enter delete password");
+    if (password === null) return null;
+    if (password !== "121314") {
+      window.alert("รหัสไม่ถูกต้อง ข้อมูลยังไม่ถูกลบ / Incorrect password. Nothing was deleted.");
+      return null;
+    }
+    return password;
+  }
+
+  async function deleteSDS(id) {
+    const item = sdsData.find(row => String(row.id) === String(id));
+    if (!item) return;
+    const password = getDeletePassword();
+    if (!password || !confirm(`ต้องการลบ "${item.chemical}" หรือไม่?`)) return;
     sdsData = sdsData.filter(row => String(row.id) !== String(id));
 
     try {
@@ -5080,7 +5094,7 @@
       openSdsFromQrUrl();
    }
 
-    function loadFromAppsScript() {      setConnectionStatus("เชื่อมต่อ Google Sheet / Drive", "Connected to Google Sheets / Drive");      google.script.run        .withSuccessHandler(applyData)        .withFailureHandler(function (error) {          console.error(error);          setConnectionStatus("เชื่อมต่อ Google Sheet ไม่สำเร็จ", "Google Sheets connection failed");          alert(error && error.message ? error.message : "ไม่สามารถโหลดข้อมูลจาก Google Sheet ได้");        })        .listSds();    }    function loadFromRemoteApi() {      var requestUrl = new URL(apiUrl, window.location.href);      requestUrl.searchParams.set("action", "api");      requestUrl.searchParams.set("_", String(Date.now()));      return fetch(requestUrl.toString(), {        method: "GET",        mode: "cors",        credentials: "omit",        cache: "no-store"      })        .then(function (response) {          if (!response.ok) throw new Error("Apps Script API HTTP " + response.status);          return response.json();        })        .then(function (response) {          if (!response || response.ok === false) throw new Error(response && response.error || "API error");          applyData(response.data || []);          setConnectionStatus("โหมดดูข้อมูลสาธารณะ", "Public read-only mode");          return response.data || [];        });    }
+    function loadFromAppsScript() {
       setConnectionStatus("เชื่อมต่อ Google Sheet / Drive", "Connected to Google Sheets / Drive");
       google.script.run
         .withSuccessHandler(applyData)
@@ -5092,7 +5106,31 @@
         .listSds();
     }
 
-    
+    function loadFromRemoteApi() {
+      var requestUrl = new URL(apiUrl, window.location.href);
+      requestUrl.searchParams.set("action", "api");
+      requestUrl.searchParams.set("_", String(Date.now()));
+
+      // Apps Script now returns CORS headers for the public API. Prefer a
+      // normal JSON request so signed-in Google sessions cannot rewrite the
+      // web-app URL to an account-scoped /macros/u/... route in some browsers.
+      return fetch(requestUrl.toString(), {
+        method: "GET",
+        mode: "cors",
+        credentials: "omit",
+        cache: "no-store"
+      })
+        .then(function (response) {
+          if (!response.ok) throw new Error("Apps Script API HTTP " + response.status);
+          return response.json();
+        })
+        .then(function (response) {
+          if (!response || response.ok === false) throw new Error(response && response.error || "API error");
+          applyData(response.data || []);
+          setConnectionStatus("โหมดดูข้อมูลสาธารณะ", "Public read-only mode");
+          return response.data || [];
+        });
+    }
 
     function readFile(file) {
       if (!file) return Promise.resolve(null);
@@ -5186,7 +5224,26 @@
       }
     };
 
-    window.deleteSDS = async function (id) {      if (!isAppsScript && !isRemote) return baseDelete(id);      if (publicReadOnly) return;      var item = sdsData.find(function (row) { return String(row.id) === String(id); });      if (!item) return;      var password = getDeletePassword();      if (!password || !confirm("ต้องการลบ \"" + item.chemical + "\" หรือไม่?")) return;      if (isAppsScript) {        google.script.run          .withSuccessHandler(loadFromAppsScript)          .withFailureHandler(function (error) { alert(error.message || "ลบข้อมูลไม่สำเร็จ"); })          .deleteSds(id, password);      } else {        await postRemote({ action: "delete", id: id, password: password });        setTimeout(function () { loadFromRemoteApi().catch(function (error) { alert(error.message); }); }, 900);      }    };    window.editSDS = function (id) {
+    window.deleteSDS = async function (id) {
+      if (!isAppsScript && !isRemote) return baseDelete(id);
+      if (publicReadOnly) return;
+      var item = sdsData.find(function (row) { return String(row.id) === String(id); });
+      if (!item) return;
+      var password = getDeletePassword();
+      if (!password || !confirm("ต้องการลบ \"" + item.chemical + "\" หรือไม่?")) return;
+
+      if (isAppsScript) {
+        google.script.run
+          .withSuccessHandler(loadFromAppsScript)
+          .withFailureHandler(function (error) { alert(error.message || "ลบข้อมูลไม่สำเร็จ"); })
+          .deleteSds(id, password);
+      } else {
+        await postRemote({ action: "delete", id: id, password: password });
+        setTimeout(function () { loadFromRemoteApi().catch(function (error) { alert(error.message); }); }, 900);
+      }
+    };
+
+    window.editSDS = function (id) {
       if (publicReadOnly) return;
       return baseEdit(id);
     };
