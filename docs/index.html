@@ -4315,9 +4315,7 @@
     openDrawer();
   }
 
-  async function deleteSDS(id) {
-    const item = sdsData.find(row => String(row.id) === String(id));
-    function getDeletePassword() {  const password = window.prompt("กรุณาใส่รหัสก่อนลบข้อมูล / Enter delete password");  if (password === null) return null;  if (password !== "121314") {    window.alert("รหัสไม่ถูกต้อง ข้อมูลยังไม่ถูกลบ / Incorrect password. Nothing was deleted.");    return null;  }  return password;}async function deleteSDS(id) {
+  function getDeletePassword() {    const password = window.prompt("กรุณาใส่รหัสก่อนลบข้อมูล / Enter delete password");    if (password === null) return null;    if (password !== "121314") {      window.alert("รหัสไม่ถูกต้อง ข้อมูลยังไม่ถูกลบ / Incorrect password. Nothing was deleted.");      return null;    }    return password;  }  async function deleteSDS(id) {    const item = sdsData.find(row => String(row.id) === String(id));    if (!item) return;    const password = getDeletePassword();    if (!password || !confirm("ต้องการลบ \"" + item.chemical + "\" หรือไม่?")) return;
     sdsData = sdsData.filter(row => String(row.id) !== String(id));
 
     try {
@@ -5188,24 +5186,7 @@
       }
     };
 
-    window.deleteSDS = async function (id) {
-      if (!isAppsScript && !isRemote) return baseDelete(id);
-      if (publicReadOnly) return;
-      var item = sdsData.find(function (row) { return String(row.id) === String(id); });
-      if (!item) return;    const password = getDeletePassword();    if (!password || !confirm(`ต้องการลบ "${item.chemical}" หรือไม่?`)) return; \"" + item.chemical + "\" หรือไม่?")) return;
-
-      if (isAppsScript) {
-        google.script.run
-          .withSuccessHandler(loadFromAppsScript)
-          .withFailureHandler(function (error) { alert(error.message || "ลบข้อมูลไม่สำเร็จ"); })
-          if (!item) return;      var password = getDeletePassword();      if (!password || !confirm("ต้องการลบ
-      } else {
-        .deleteSds(id, password);
-        setTimeout(function () { loadFromRemoteApi().catch(function (error) { alert(error.message); }); }, 900);
-      }
-    };
-
-    window.editSDS = function (id) {
+    window.deleteSDS = async function (id) {      if (!isAppsScript && !isRemote) return baseDelete(id);      if (publicReadOnly) return;      var item = sdsData.find(function (row) { return String(row.id) === String(id); });      if (!item) return;      var password = getDeletePassword();      if (!password || !confirm("ต้องการลบ \"" + item.chemical + "\" หรือไม่?")) return;      if (isAppsScript) {        google.script.run          .withSuccessHandler(loadFromAppsScript)          .withFailureHandler(function (error) { alert(error.message || "ลบข้อมูลไม่สำเร็จ"); })          .deleteSds(id, password);      } else {        await postRemote({ action: "delete", id: id, password: password });        setTimeout(function () { loadFromRemoteApi().catch(function (error) { alert(error.message); }); }, 900);      }    };    window.editSDS = function (id) {
       if (publicReadOnly) return;
       return baseEdit(id);
     };
