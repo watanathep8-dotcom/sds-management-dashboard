@@ -5082,7 +5082,7 @@
       openSdsFromQrUrl();
    }
 
-    function loadFromAppsScript() {
+    function loadFromAppsScript() {      setConnectionStatus("เชื่อมต่อ Google Sheet / Drive", "Connected to Google Sheets / Drive");      google.script.run        .withSuccessHandler(applyData)        .withFailureHandler(function (error) {          console.error(error);          setConnectionStatus("เชื่อมต่อ Google Sheet ไม่สำเร็จ", "Google Sheets connection failed");          alert(error && error.message ? error.message : "ไม่สามารถโหลดข้อมูลจาก Google Sheet ได้");        })        .listSds();    }    function loadFromRemoteApi() {      var requestUrl = new URL(apiUrl, window.location.href);      requestUrl.searchParams.set("action", "api");      requestUrl.searchParams.set("_", String(Date.now()));      return fetch(requestUrl.toString(), {        method: "GET",        mode: "cors",        credentials: "omit",        cache: "no-store"      })        .then(function (response) {          if (!response.ok) throw new Error("Apps Script API HTTP " + response.status);          return response.json();        })        .then(function (response) {          if (!response || response.ok === false) throw new Error(response && response.error || "API error");          applyData(response.data || []);          setConnectionStatus("โหมดดูข้อมูลสาธารณะ", "Public read-only mode");          return response.data || [];        });    }
       setConnectionStatus("เชื่อมต่อ Google Sheet / Drive", "Connected to Google Sheets / Drive");
       google.script.run
         .withSuccessHandler(applyData)
