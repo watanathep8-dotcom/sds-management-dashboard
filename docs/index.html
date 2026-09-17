@@ -5094,37 +5094,7 @@
         .listSds();
     }
 
-    function loadFromRemoteApi() {
-      return new Promise(function (resolve, reject) {
-        var callback = "sdsJsonp_" + Date.now();
-        var script = document.createElement("script");
-        var url = new URL(apiUrl, window.location.href);
-        url.searchParams.set("action", "api");
-        url.searchParams.set("callback", callback);
-        url.searchParams.set("_", String(Date.now()));
-
-        window[callback] = function (response) {
-          try {
-            if (!response || response.ok === false) throw new Error(response && response.error || "API error");
-            applyData(response.data || []);
-            setConnectionStatus("โหมดดูข้อมูลสาธารณะ", "Public read-only mode");
-            resolve(response.data || []);
-          } catch (error) {
-            reject(error);
-          } finally {
-            delete window[callback];
-            script.remove();
-          }
-        };
-        script.onerror = function () {
-          delete window[callback];
-          script.remove();
-          reject(new Error("ไม่สามารถเชื่อมต่อ Apps Script API ได้"));
-        };
-        script.src = url.toString();
-        document.body.appendChild(script);
-      });
-    }
+    
 
     function readFile(file) {
       if (!file) return Promise.resolve(null);
