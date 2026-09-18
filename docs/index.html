@@ -256,14 +256,14 @@
     .filter-input { width: 155px; }
     .table-wrapper { overflow-x: auto; border-top: 1px solid #cbd5e1; }
     table {
-      width: 100%; min-width: 1480px; table-layout: fixed;
+      width: 100%; min-width: 1160px; table-layout: fixed;
       border-collapse: separate; border-spacing: 0; border: 1px solid #cbd5e1;
     }
     thead { background: #1e3a8a; }
     th, td {
-      padding: 16px 22px; text-align: left; vertical-align: middle;
+      padding: 10px 10px; text-align: left; vertical-align: middle;
       border-right: 1px solid #dbe4ef; border-bottom: 1px solid #dbe4ef;
-      font-size: 13px;
+      font-size: 12px;
     }
     th {
       color: #fff; font-weight: 800; letter-spacing: 0.02em;
@@ -278,16 +278,16 @@
     thead th:nth-child(7) { background: #059669; }
     thead th:nth-child(8) { background: #d97706; }
     thead th:nth-child(9) { background: #dc2626; }
-    td { color: #334155; white-space: nowrap; }
-    th:nth-child(1), td:nth-child(1) { width: 17%; }
-    th:nth-child(2), td:nth-child(2) { width: 9%; }
-    th:nth-child(3), td:nth-child(3) { width: 10%; }
-    th:nth-child(4), td:nth-child(4) { width: 19%; }
-    th:nth-child(5), td:nth-child(5) { width: 12%; min-width: 175px; }
-    th:nth-child(6), td:nth-child(6) { width: 12%; min-width: 175px; }
-    th:nth-child(7), td:nth-child(7) { width: 10%; }
-    th:nth-child(8), td:nth-child(8) { width: 5.5%; }
-    th:nth-child(9), td:nth-child(9) { width: 5.5%; }
+    td { color: #334155; white-space: normal; overflow-wrap: anywhere; }
+    th:nth-child(1), td:nth-child(1) { width: 21%; }
+    th:nth-child(2), td:nth-child(2) { width: 8%; }
+    th:nth-child(3), td:nth-child(3) { width: 9%; }
+    th:nth-child(4), td:nth-child(4) { width: 23%; }
+    th:nth-child(5), td:nth-child(5) { width: 11%; min-width: 0; }
+    th:nth-child(6), td:nth-child(6) { width: 11%; min-width: 0; }
+    th:nth-child(7), td:nth-child(7) { width: 7%; }
+    th:nth-child(8), td:nth-child(8) { width: 5%; }
+    th:nth-child(9), td:nth-child(9) { width: 5%; }
    .action-column, .action-cell { text-align: center; }
     .qr-column, .qr-cell { text-align: center; }
     .qr-cell { white-space: normal; }
@@ -296,7 +296,7 @@
     .qr-btn small { font-size: 9px; font-weight: 600; opacity: .78; }
    body.public-readonly .action-column,
    body.public-readonly .action-cell { display: none; }
-    .detail-cell { white-space: pre-line; line-height: 1.4; }
+    .detail-cell { white-space: pre-line; line-height: 1.35; overflow-wrap: anywhere; word-break: break-word; }
     .bilingual-data-line { display: block; white-space: normal; }
     .bilingual-data-line small { display: block; margin-top: 2px; color: var(--muted); font-size: .9em; font-weight: 500; }
     .sds-missing { color: var(--muted); font-size: 12px; }
@@ -427,7 +427,7 @@
       border: 0; background: transparent; color: var(--primary);
       font-weight: 600; padding: 0; text-align: left;
       text-decoration: none;
-      display: inline-flex; align-items: center; gap: 9px; white-space: nowrap;
+      display: inline-flex; align-items: flex-start; gap: 7px; max-width: 100%; min-width: 0; white-space: normal; overflow-wrap: anywhere;
     }
     .chemical-hazard-icon { display: inline-block; font-size: 20px; text-decoration: none; }
     .sds-link .chemical-name { text-decoration: underline; text-underline-offset: 3px; }
@@ -607,7 +607,7 @@
       .form-grid { grid-template-columns: 1fr; }
       .form-group.full { grid-column: auto; }
       .table-wrapper { overflow-x: auto; }
-      table { width: 1480px; min-width: 1480px; table-layout: fixed; }
+      table { width: 1160px; min-width: 1160px; table-layout: fixed; }
       th, td { padding: 9px 4px; font-size: 11px; }
       th { white-space: normal; }
       td { white-space: normal; }
