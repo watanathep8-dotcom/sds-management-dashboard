@@ -66,6 +66,8 @@
       transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
     }
     .settings-btn:hover { transform: translateY(-2px); background: #dbeafe; box-shadow: 0 6px 14px rgba(30, 64, 175, 0.14); }
+    .topbar-actions { display: flex; align-items: center; gap: 10px; }
+    .topbar-actions .btn-primary { padding: 9px 14px; font-size: 13px; white-space: nowrap; }
 
     .container { max-width: 1500px; margin: auto; padding: 30px; }
     .page-header {
@@ -597,6 +599,7 @@
     @media (max-width: 600px) {
       .container { padding: 18px; }
       .topbar { padding: 0 18px; }
+      .topbar-actions .btn-primary { padding: 8px 10px; font-size: 11px; }
       .cards { grid-template-columns: 1fr; }
       .page-header { align-items: flex-start; flex-direction: column; }
       .page-header .btn-primary { width: 100%; }
@@ -690,17 +693,12 @@
       <p><span class="bilingual-label">ระบบเอกสารข้อมูลความปลอดภัย<small>Safety Data Sheet System</small></span></p>
     </div>
   </div>
+  <div class="topbar-actions">
+    <button id="addSdsButton" class="btn-primary" onclick="openAddDrawer()"><span class="bilingual-label">＋ เพิ่มข้อมูล SDS<small>Add SDS</small></span></button>
+  </div>
 </header>
 
 <main class="container">
-  <section class="page-header">
-    <div>
-      <h2><span class="bilingual-label">แดชบอร์ด SDS<small>SDS Dashboard</small></span></h2>
-      <p>ภาพรวมและควบคุมเอกสารข้อมูลความปลอดภัย<br><span class="bilingual-label"><small>Safety Data Sheet overview and control</small></span></p>
-    </div>
-    <button class="btn-primary" onclick="openAddDrawer()"><span class="bilingual-label">＋ เพิ่มข้อมูล SDS<small>Add SDS</small></span></button>
-  </section>
-
   <section class="overview single-overview">
     <div class="card">
       <div class="section-title-row">
@@ -5072,7 +5070,7 @@
 
     function applyPublicMode() {
       if (!publicReadOnly) return;
-      var addButton = document.querySelector(".page-header .btn-primary");
+      var addButton = document.getElementById("addSdsButton");
       if (addButton) addButton.style.display = "none";
       document.body.classList.add("public-readonly");
       var drawer = document.getElementById("drawer");
