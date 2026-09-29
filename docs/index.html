@@ -207,7 +207,9 @@
     .measure-list { display: grid; gap: 6px; line-height: 1.35; }
     .measure-item { display: block; padding-bottom: 5px; border-bottom: 1px dashed #dbe4ef; }
     .measure-item:last-child { padding-bottom: 0; border-bottom: 0; }
-    .measure-label { display: block; color: #1e40af; font-size: 10px; font-weight: 800; }
+    .measure-label { display: flex; align-items: flex-start; gap: 5px; color: #1e40af; font-size: 10px; font-weight: 800; }
+    .measure-icon { display: inline-flex; width: 17px; flex: 0 0 17px; justify-content: center; font-size: 14px; line-height: 1.1; filter: drop-shadow(0 2px 3px rgba(30, 64, 175, .18)); }
+    .measure-label-text { min-width: 0; }
     .measure-label small { color: #64748b; font-size: 9px; font-weight: 600; }
     .measure-value { display: block; margin-top: 2px; color: #334155; }
     .flame-icon {
@@ -306,11 +308,10 @@
     thead th:nth-child(5), thead th:nth-child(6) { background: #2563eb; }
     thead th:nth-child(7) { background: #0f766e; }
     thead th:nth-child(8) { background: #d97706; }
-    thead th:nth-child(9) { background: #7c3aed; }
-    thead th:nth-child(10) { background: #0f766e; }
-    thead th:nth-child(11) { background: #059669; }
-    thead th:nth-child(12) { background: #d97706; }
-    thead th:nth-child(13) { background: #dc2626; }
+    thead th:nth-child(9) { background: #0f766e; }
+    thead th:nth-child(10) { background: #059669; }
+    thead th:nth-child(11) { background: #d97706; }
+    thead th:nth-child(12) { background: #dc2626; }
     td { color: #334155; white-space: normal; overflow-wrap: anywhere; }
     th:nth-child(1), td:nth-child(1) { width: 3%; text-align: center; }
     th:nth-child(2), td:nth-child(2) { width: 5%; }
@@ -318,13 +319,12 @@
     th:nth-child(4), td:nth-child(4) { width: 10%; }
     th:nth-child(5), td:nth-child(5) { width: 7%; }
     th:nth-child(6), td:nth-child(6) { width: 7%; }
-    th:nth-child(7), td:nth-child(7) { width: 22%; }
-    th:nth-child(8), td:nth-child(8) { width: 12%; }
+    th:nth-child(7), td:nth-child(7) { width: 20%; }
+    th:nth-child(8), td:nth-child(8) { width: 20%; }
     th:nth-child(9), td:nth-child(9) { width: 6%; min-width: 0; }
-    th:nth-child(10), td:nth-child(10) { width: 6%; min-width: 0; }
-    th:nth-child(11), td:nth-child(11) { width: 4%; }
+    th:nth-child(10), td:nth-child(10) { width: 4%; }
+    th:nth-child(11), td:nth-child(11) { width: 2%; }
     th:nth-child(12), td:nth-child(12) { width: 2%; }
-    th:nth-child(13), td:nth-child(13) { width: 2%; }
    .action-column, .action-cell { text-align: center; }
     .qr-column, .qr-cell { text-align: center; }
     .qr-cell { white-space: normal; }
@@ -787,7 +787,6 @@
             <th><span class="bilingual-label">จุดวาบไฟ<small>Flash Point (°C)</small></span></th>
             <th><span class="bilingual-label">มาตรการปฐมพยาบาล<small>First aid measures</small></span></th>
             <th><span class="bilingual-label">มาตรการดับเพลิง<small>Firefighting measures</small></span></th>
-            <th><span class="bilingual-label">SDS ภาษาไทย<small>Thai SDS</small></span></th>
             <th><span class="bilingual-label">SDS ภาษาอังกฤษ<small>English SDS</small></span></th>
             <th class="qr-column"><span class="bilingual-label">QR Code<small>พิมพ์ QR</small></span></th>
             <th class="action-column"><span class="bilingual-label">แก้ไข<small>Edit</small></span></th>
@@ -839,7 +838,7 @@
           </div>
           <div class="form-group">
             <label><span class="bilingual-label">จุดวาบไฟ<small>Flash Point (°C)</small></span></label>
-            <input class="form-control" id="flashPoint" placeholder="เช่น 71 (Closed cup)">
+            <input class="form-control" id="flashPoint" placeholder="เช่น 71°C (Closed cup)">
           </div>
         </div>
       </div>
@@ -8522,10 +8521,10 @@
       const labels = definition ? hazardLabels(definition) : { thai: name, english: name };
       return `${labels.thai} / ${labels.english}`;
     }).join(", ") || "-";
-    const languages = getSdsLanguages(item).map(language => (LANGUAGE_LABELS[language] || { thai: language, english: language }).thai).join(" / ");
+    const languages = getSdsLanguages(item).filter(language => language === "English").map(language => (LANGUAGE_LABELS[language] || { thai: language, english: language }).thai).join(" / ");
     const liveItem = sdsData.find(row => String(row.id) === String(item.id));
     const pdfItem = liveItem ? { ...liveItem, ...item } : item;
-    const languageOptions = getSdsLanguages(item)
+    const languageOptions = getSdsLanguages(item).filter(language => language === "English")
       .map(language => ({ language, source: getPdfSourceForLanguage(pdfItem, language) }))
       .filter(option => option.source.url || option.source.fileId);
     const languageButtons = languageOptions.map(option => {
@@ -8541,10 +8540,10 @@
         <div class="sds-quick-field"><label>ลำดับ / No.</label><div>${escapeHTML(item.sequence || "-")}</div></div>
         <div class="sds-quick-field"><label>กลุ่ม / Group</label><div>${escapeHTML(item.group || "-")}</div></div>
         <div class="sds-quick-field"><label>เลข CAS / CAS No.</label><div>${escapeHTML(item.cas || "-")}</div></div>
-        <div class="sds-quick-field"><label>จุดวาบไฟ / Flash Point</label><div>${bilingualDataMarkup(item.flashPoint)}</div></div>
+        <div class="sds-quick-field"><label>จุดวาบไฟ / Flash Point</label><div>${bilingualDataMarkup(formatFlashPointValue(item.flashPoint))}</div></div>
         <div class="sds-quick-field"><label>ภาษา SDS / SDS Language</label><div>${escapeHTML(languages || "-")}</div></div>
         <div class="sds-quick-field" style="grid-column:1/-1;"><label>มาตรการปฐมพยาบาล / First aid measures</label><div>${measureListMarkup(item.firstAidMeasures)}</div></div>
-        <div class="sds-quick-field" style="grid-column:1/-1;"><label>มาตรการดับเพลิง / Firefighting measures</label><div>${measureListMarkup(item.firefightingMeasures)}</div></div>
+        <div class="sds-quick-field" style="grid-column:1/-1;"><label>มาตรการดับเพลิง / Firefighting measures</label><div>${measureListMarkup(item.firefightingMeasures, "firefighting")}</div></div>
       </div>
       <div class="sds-quick-actions sds-language-actions">
         ${languageButtons || `<div class="sds-language-empty">ไม่พบไฟล์ SDS สำหรับเปิดจาก QR / No public SDS PDF is available for this QR</div>`}
@@ -8929,7 +8928,7 @@
        : (existing ? getSdsLanguages(existing) : [pdfAutoExtractedData.language || "English"]),
      hazards: hazards.length ? hazards : (pdfAutoExtractedData.hazard ? [pdfAutoExtractedData.hazard] : (existing?.hazards || [])),
      thaiSds: typeof pdfAutoExtractedData.thaiSds === "boolean" ? pdfAutoExtractedData.thaiSds : (existing ? Boolean(existing.thaiSds) : false),
-     flashPoint: document.getElementById("flashPoint").value.trim() || pdfAutoExtractedData.flashPoint || (existing ? (existing.flashPoint || "") : ""),
+     flashPoint: formatFlashPointValue(document.getElementById("flashPoint").value.trim() || pdfAutoExtractedData.flashPoint || (existing ? (existing.flashPoint || "") : "")),
      firstAidMeasures: measuresFromForm(FIRST_AID_FIELDS, "value"),
      firefightingMeasures: measuresFromForm(FIREFIGHTING_FIELDS, "detail"),
      hasPdf: Boolean(existing && (existing.hasPdf || existing.pdfUrl || existing.pdfFileId))
@@ -8979,7 +8978,7 @@
     document.getElementById("cas").value = item.cas;
     document.getElementById("sequence").value = item.sequence || "";
     document.getElementById("group").value = item.group || "";
-    document.getElementById("flashPoint").value = item.flashPoint || "";
+    document.getElementById("flashPoint").value = formatFlashPointValue(item.flashPoint || "");
     populateMeasureFields(FIRST_AID_FIELDS, item.firstAidMeasures);
     populateMeasureFields(FIREFIGHTING_FIELDS, item.firefightingMeasures);
     const selectedHazards = new Set(item.hazards || []);
@@ -9066,11 +9065,33 @@
     return icons ? `<div class="pictogram-set">${icons}</div>` : "-";
   }
 
-  function measureListMarkup(items) {
+  function formatFlashPointValue(value) {
+    const text = String(value || "").trim();
+    if (!text || !/\d/.test(text)) return text;
+    if (/(?:°|º|˚)?\s*[cfk]\b|℃|℉|fahrenheit|celsius/i.test(text)) return text;
+    return text.replace(/(^|[<>~=≈]\s*)(\d+(?:\.\d+)?)/, "$1$2°C");
+  }
+
+  function measureIconMarkup(item, kind) {
+    const text = `${item?.thai || ""} ${item?.english || ""} ${item?.value || ""} ${item?.detail || ""}`.toLowerCase();
+    const icon = kind === "firstAid"
+      ? (/(สูดดม|inhal|หายใจ)/i.test(text) ? "🫁"
+        : /(ผิวหนัง|skin|สัมผัส)/i.test(text) ? "🖐️"
+        : /(ตา|eye)/i.test(text) ? "👁️"
+        : /(กลืน|กิน|ingestion|swallow)/i.test(text) ? "🍽️" : "🩺")
+      : (/(น้ำ|water|ละออง|spray)/i.test(text) ? "💧"
+        : /(โฟม|foam)/i.test(text) ? "🫧"
+        : /(ผง|chemical powder|dry chemical)/i.test(text) ? "🧯"
+        : /(คาร์บอน|carbon dioxide|co2)/i.test(text) ? "☁️"
+        : /(ทราย|sand)/i.test(text) ? "🪨" : "🔥");
+    return `<span class="measure-icon" aria-hidden="true">${icon}</span>`;
+  }
+
+  function measureListMarkup(items, kind = "firstAid") {
     if (!Array.isArray(items) || !items.length) return "-";
     return `<div class="measure-list">${items.map(item => {
       const detail = String(item.value || item.detail || "").trim();
-      return `<span class="measure-item"><span class="measure-label">${escapeHTML(item.thai || "")} <small>${escapeHTML(item.english || "")}</small></span>${detail ? `<span class="measure-value">${escapeHTML(detail)}</span>` : ""}</span>`;
+      return `<span class="measure-item"><span class="measure-label">${measureIconMarkup(item, kind)}<span class="measure-label-text">${escapeHTML(item.thai || "")} <small>${escapeHTML(item.english || "")}</small></span></span>${detail ? `<span class="measure-value">${escapeHTML(detail)}</span>` : ""}</span>`;
     }).join("")}</div>`;
   }
 
@@ -9329,7 +9350,7 @@
     if (filtered.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="13"><div class="empty-state"><span class="bilingual-label">ไม่พบข้อมูล SDS<small>No SDS data found</small></span></div></td>
+          <td colspan="12"><div class="empty-state"><span class="bilingual-label">ไม่พบข้อมูล SDS<small>No SDS data found</small></span></div></td>
         </tr>`;
       return;
     }
@@ -9340,16 +9361,14 @@
           <td>${escapeHTML(item.group || "-")}</td>
           <td>
             <button class="sds-link" title="เปิด SDS PDF" onclick="viewSDS(${item.id})">
-              ${hazardVisual(item)}
               ${chemicalNameMarkup(item)}
             </button>
           </td>
           <td>${pictogramCellMarkup(item)}</td>
           <td>${escapeHTML(item.cas)}</td>
-          <td class="detail-cell">${bilingualDataMarkup(item.flashPoint)}</td>
-          <td class="detail-cell">${measureListMarkup(item.firstAidMeasures)}</td>
-          <td class="detail-cell">${measureListMarkup(item.firefightingMeasures)}</td>
-         <td>${languageSdsCell(item, "Thai")}</td>
+          <td class="detail-cell">${bilingualDataMarkup(formatFlashPointValue(item.flashPoint))}</td>
+          <td class="detail-cell">${measureListMarkup(item.firstAidMeasures, "firstAid")}</td>
+          <td class="detail-cell">${measureListMarkup(item.firefightingMeasures, "firefighting")}</td>
          <td>${languageSdsCell(item, "English")}</td>
           <td class="qr-cell">
             <button class="qr-btn" type="button" title="พิมพ์ QR Code" onclick="showQrCode(decodeURIComponent('${encodeURIComponent(String(item.id))}'))"><span class="bilingual-label">▦ พิมพ์ QR<small>Print QR</small></span></button>
@@ -9364,15 +9383,13 @@
   }
 
  function languageSdsCell(item, language) {
-    const hasPdf = Boolean(item.hasPdf || item.pdfUrl || item.pdfFileId);
-    const isAvailable = getSdsLanguages(item).includes(language);
-    if (isAvailable && hasPdf) {
+    if (language !== "English") return "";
+    const fileUrl = item.englishPdfUrl || item.englishSdsUrl || item.pdfUrl || "";
+    const fileId = item.englishPdfFileId || item.englishSdsFileId || item.pdfFileId || "";
+    if (fileUrl || fileId) {
       return `<button class="pdf-btn sds-language-btn" onclick="viewSDS(${item.id})"><span class="bilingual-label">📄 ดู SDS<small>View SDS</small></span></button>`;
     }
-    if (isAvailable) {
-      return `<span class="sds-available">✓ มี<small>Available</small></span>`;
-    }
-    return `<span class="sds-missing">-</span>`;
+    return "";
   }
 
   function updateSummary() {
@@ -9389,12 +9406,11 @@
       return `${item.thai || ""} / ${item.english || ""}${detail ? `: ${detail}` : ""}`;
     }).join(" | ");
     const rows = [
-      ["ลำดับ / No.", "กลุ่ม / Group", "สารเคมี ภาษาไทย / Chemical (Thai)", "สารเคมี ภาษาอังกฤษ / Chemical (English)", "เลข CAS / CAS Number", "สัญลักษณ์ความอันตราย / Pictogram", "จุดวาบไฟ / Flash Point", "มาตรการปฐมพยาบาล / First aid measures", "มาตรการดับเพลิง / Firefighting measures", "SDS ภาษาไทย / Thai SDS", "SDS ภาษาอังกฤษ / English SDS", "ลิงก์ QR / QR URL"],
+      ["ลำดับ / No.", "กลุ่ม / Group", "สารเคมี ภาษาไทย / Chemical (Thai)", "สารเคมี ภาษาอังกฤษ / Chemical (English)", "เลข CAS / CAS Number", "สัญลักษณ์ความอันตราย / Pictogram", "จุดวาบไฟ / Flash Point", "มาตรการปฐมพยาบาล / First aid measures", "มาตรการดับเพลิง / Firefighting measures", "SDS ภาษาอังกฤษ / English SDS", "ลิงก์ QR / QR URL"],
      ...sdsData.map(item => {
        const hasPdf = Boolean(item.hasPdf || item.pdfUrl || item.pdfFileId);
         const sdsLanguages = getSdsLanguages(item);
-        const thaiAvailable = Boolean(sdsLanguages.includes("Thai") && hasPdf);
-        const englishAvailable = Boolean(sdsLanguages.includes("English") && hasPdf);
+        const englishAvailable = Boolean(item.englishPdfUrl || item.englishSdsUrl || item.pdfUrl || item.englishPdfFileId || item.englishSdsFileId || item.pdfFileId);
         const hazards = (item.hazards || []).map(name => {
           const definition = getHazardDefinition(name);
           const labels = definition ? hazardLabels(definition) : { thai: name, english: name };
@@ -9403,9 +9419,8 @@
         const names = chemicalNameFields(item);
         return [
           item.sequence || "", item.group || "", names.chemicalThai, names.chemicalEnglish, item.cas, hazards,
-          item.flashPoint || "", formatMeasures(item.firstAidMeasures), formatMeasures(item.firefightingMeasures),
-          thaiAvailable ? "มี / Available" : "ไม่มี / Not available",
-          englishAvailable ? "มี / Available" : "ไม่มี / Not available",
+          formatFlashPointValue(item.flashPoint), formatMeasures(item.firstAidMeasures), formatMeasures(item.firefightingMeasures),
+          englishAvailable ? "มี / Available" : "",
           publicSdsUrl(item)
         ];
       })
@@ -9905,7 +9920,7 @@
         language: auto.language || (existing ? getLanguageLabel(existing) : "English"),
         hazards: selectedHazards.length ? selectedHazards : (auto.hazard ? [auto.hazard] : ((existing && existing.hazards) || [])),
         thaiSds: typeof auto.thaiSds === "boolean" ? auto.thaiSds : (existing ? Boolean(existing.thaiSds) : false),
-        flashPoint: document.getElementById("flashPoint").value.trim() || auto.flashPoint || (existing ? (existing.flashPoint || "") : ""),
+        flashPoint: formatFlashPointValue(document.getElementById("flashPoint").value.trim() || auto.flashPoint || (existing ? (existing.flashPoint || "") : "")),
         firstAidMeasures: measuresFromForm(FIRST_AID_FIELDS, "value"),
         firefightingMeasures: measuresFromForm(FIREFIGHTING_FIELDS, "detail")
       };
