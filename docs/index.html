@@ -308,23 +308,25 @@
     thead th:nth-child(5), thead th:nth-child(6) { background: #2563eb; }
     thead th:nth-child(7) { background: #0f766e; }
     thead th:nth-child(8) { background: #d97706; }
-    thead th:nth-child(9) { background: #0f766e; }
-    thead th:nth-child(10) { background: #059669; }
-    thead th:nth-child(11) { background: #d97706; }
-    thead th:nth-child(12) { background: #dc2626; }
+    thead th:nth-child(9) { background: #7c3aed; }
+    thead th:nth-child(10) { background: #0f766e; }
+    thead th:nth-child(11) { background: #059669; }
+    thead th:nth-child(12) { background: #d97706; }
+    thead th:nth-child(13) { background: #dc2626; }
     td { color: #334155; white-space: normal; overflow-wrap: anywhere; }
     th:nth-child(1), td:nth-child(1) { width: 3%; text-align: center; }
     th:nth-child(2), td:nth-child(2) { width: 5%; }
-    th:nth-child(3), td:nth-child(3) { width: 14%; }
-    th:nth-child(4), td:nth-child(4) { width: 10%; }
+    th:nth-child(3), td:nth-child(3) { width: 13%; }
+    th:nth-child(4), td:nth-child(4) { width: 9%; }
     th:nth-child(5), td:nth-child(5) { width: 7%; }
     th:nth-child(6), td:nth-child(6) { width: 7%; }
-    th:nth-child(7), td:nth-child(7) { width: 20%; }
-    th:nth-child(8), td:nth-child(8) { width: 20%; }
+    th:nth-child(7), td:nth-child(7) { width: 18%; }
+    th:nth-child(8), td:nth-child(8) { width: 18%; }
     th:nth-child(9), td:nth-child(9) { width: 6%; min-width: 0; }
-    th:nth-child(10), td:nth-child(10) { width: 4%; }
-    th:nth-child(11), td:nth-child(11) { width: 2%; }
+    th:nth-child(10), td:nth-child(10) { width: 6%; min-width: 0; }
+    th:nth-child(11), td:nth-child(11) { width: 4%; }
     th:nth-child(12), td:nth-child(12) { width: 2%; }
+    th:nth-child(13), td:nth-child(13) { width: 2%; }
    .action-column, .action-cell { text-align: center; }
     .qr-column, .qr-cell { text-align: center; }
     .qr-cell { white-space: normal; }
@@ -787,6 +789,7 @@
             <th><span class="bilingual-label">จุดวาบไฟ<small>Flash Point (°C)</small></span></th>
             <th><span class="bilingual-label">มาตรการปฐมพยาบาล<small>First aid measures</small></span></th>
             <th><span class="bilingual-label">มาตรการดับเพลิง<small>Firefighting measures</small></span></th>
+            <th><span class="bilingual-label">SDS ภาษาไทย<small>Thai SDS</small></span></th>
             <th><span class="bilingual-label">SDS ภาษาอังกฤษ<small>English SDS</small></span></th>
             <th class="qr-column"><span class="bilingual-label">QR Code<small>พิมพ์ QR</small></span></th>
             <th class="action-column"><span class="bilingual-label">แก้ไข<small>Edit</small></span></th>
@@ -8521,10 +8524,13 @@
       const labels = definition ? hazardLabels(definition) : { thai: name, english: name };
       return `${labels.thai} / ${labels.english}`;
     }).join(", ") || "-";
-    const languages = getSdsLanguages(item).filter(language => language === "English").map(language => (LANGUAGE_LABELS[language] || { thai: language, english: language }).thai).join(" / ");
+    const languages = getSdsLanguages(item).filter(language => {
+      const source = getPdfSourceForLanguage(item, language);
+      return source.url || source.fileId;
+    }).map(language => (LANGUAGE_LABELS[language] || { thai: language, english: language }).thai).join(" / ");
     const liveItem = sdsData.find(row => String(row.id) === String(item.id));
     const pdfItem = liveItem ? { ...liveItem, ...item } : item;
-    const languageOptions = getSdsLanguages(item).filter(language => language === "English")
+    const languageOptions = getSdsLanguages(item)
       .map(language => ({ language, source: getPdfSourceForLanguage(pdfItem, language) }))
       .filter(option => option.source.url || option.source.fileId);
     const languageButtons = languageOptions.map(option => {
@@ -9350,7 +9356,7 @@
     if (filtered.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="12"><div class="empty-state"><span class="bilingual-label">ไม่พบข้อมูล SDS<small>No SDS data found</small></span></div></td>
+          <td colspan="13"><div class="empty-state"><span class="bilingual-label">ไม่พบข้อมูล SDS<small>No SDS data found</small></span></div></td>
         </tr>`;
       return;
     }
@@ -9369,6 +9375,7 @@
           <td class="detail-cell">${bilingualDataMarkup(formatFlashPointValue(item.flashPoint))}</td>
           <td class="detail-cell">${measureListMarkup(item.firstAidMeasures, "firstAid")}</td>
           <td class="detail-cell">${measureListMarkup(item.firefightingMeasures, "firefighting")}</td>
+          <td>${languageSdsCell(item, "Thai")}</td>
          <td>${languageSdsCell(item, "English")}</td>
           <td class="qr-cell">
             <button class="qr-btn" type="button" title="พิมพ์ QR Code" onclick="showQrCode(decodeURIComponent('${encodeURIComponent(String(item.id))}'))"><span class="bilingual-label">▦ พิมพ์ QR<small>Print QR</small></span></button>
@@ -9383,13 +9390,27 @@
   }
 
  function languageSdsCell(item, language) {
-    if (language !== "English") return "";
-    const fileUrl = item.englishPdfUrl || item.englishSdsUrl || item.pdfUrl || "";
-    const fileId = item.englishPdfFileId || item.englishSdsFileId || item.pdfFileId || "";
+    const prefix = language === "Thai" ? "thai" : "english";
+    const fileUrl = item[`${prefix}PdfUrl`] || item[`${prefix}SdsUrl`] || (language === "English" ? item.pdfUrl : "") || "";
+    const fileId = item[`${prefix}PdfFileId`] || item[`${prefix}SdsFileId`] || (language === "English" ? item.pdfFileId : "") || "";
     if (fileUrl || fileId) {
-      return `<button class="pdf-btn sds-language-btn" onclick="viewSDS(${item.id})"><span class="bilingual-label">📄 ดู SDS<small>View SDS</small></span></button>`;
+      return `<button class="pdf-btn sds-language-btn" onclick="openTableSds(${item.id}, '${language}')"><span class="bilingual-label">📄 ดู SDS<small>View SDS</small></span></button>`;
     }
     return "";
+  }
+
+  function openTableSds(id, language) {
+    const item = sdsData.find(row => String(row.id) === String(id));
+    if (!item) return;
+    const source = getPdfSourceForLanguage(item, language);
+    if (source.url) {
+      openPdfUrlInViewer(item, source);
+      return;
+    }
+    if (source.fileId) {
+      currentQuickSdsRecord = item;
+      openQuickSdsLanguage(language);
+    }
   }
 
   function updateSummary() {
@@ -9406,10 +9427,9 @@
       return `${item.thai || ""} / ${item.english || ""}${detail ? `: ${detail}` : ""}`;
     }).join(" | ");
     const rows = [
-      ["ลำดับ / No.", "กลุ่ม / Group", "สารเคมี ภาษาไทย / Chemical (Thai)", "สารเคมี ภาษาอังกฤษ / Chemical (English)", "เลข CAS / CAS Number", "สัญลักษณ์ความอันตราย / Pictogram", "จุดวาบไฟ / Flash Point", "มาตรการปฐมพยาบาล / First aid measures", "มาตรการดับเพลิง / Firefighting measures", "SDS ภาษาอังกฤษ / English SDS", "ลิงก์ QR / QR URL"],
+      ["ลำดับ / No.", "กลุ่ม / Group", "สารเคมี ภาษาไทย / Chemical (Thai)", "สารเคมี ภาษาอังกฤษ / Chemical (English)", "เลข CAS / CAS Number", "สัญลักษณ์ความอันตราย / Pictogram", "จุดวาบไฟ / Flash Point", "มาตรการปฐมพยาบาล / First aid measures", "มาตรการดับเพลิง / Firefighting measures", "SDS ภาษาไทย / Thai SDS", "SDS ภาษาอังกฤษ / English SDS", "ลิงก์ QR / QR URL"],
      ...sdsData.map(item => {
-       const hasPdf = Boolean(item.hasPdf || item.pdfUrl || item.pdfFileId);
-        const sdsLanguages = getSdsLanguages(item);
+        const thaiAvailable = Boolean(item.thaiPdfUrl || item.thaiSdsUrl || item.thaiPdfFileId || item.thaiSdsFileId);
         const englishAvailable = Boolean(item.englishPdfUrl || item.englishSdsUrl || item.pdfUrl || item.englishPdfFileId || item.englishSdsFileId || item.pdfFileId);
         const hazards = (item.hazards || []).map(name => {
           const definition = getHazardDefinition(name);
@@ -9420,6 +9440,7 @@
         return [
           item.sequence || "", item.group || "", names.chemicalThai, names.chemicalEnglish, item.cas, hazards,
           formatFlashPointValue(item.flashPoint), formatMeasures(item.firstAidMeasures), formatMeasures(item.firefightingMeasures),
+          thaiAvailable ? "มี / Available" : "",
           englishAvailable ? "มี / Available" : "",
           publicSdsUrl(item)
         ];
