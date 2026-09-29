@@ -212,6 +212,10 @@
     .measure-label-text { min-width: 0; }
     .measure-label small { color: #64748b; font-size: 9px; font-weight: 600; }
     .measure-value { display: block; margin-top: 2px; color: #334155; }
+    .ppe-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; }
+    .ppe-item { display: inline-flex; align-items: center; gap: 4px; padding: 4px 6px; border: 1px solid #dbe4ef; border-radius: 8px; background: #f8fbff; color: #1e3a8a; font-size: 10px; font-weight: 800; }
+    .ppe-item small { color: #64748b; font-size: 9px; font-weight: 600; }
+    .ppe-icon { display: inline-flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; }
     .flame-icon {
       display: inline-block; font-size: 28px; transform-origin: center bottom;
       filter: drop-shadow(0 0 3px rgba(249, 115, 22, 0.55));
@@ -1056,6 +1060,14 @@
   const LANGUAGE_LABELS = {
     Thai: { thai: "ภาษาไทย", english: "Thai" },
     English: { thai: "ภาษาอังกฤษ", english: "English" }
+  };
+  const PPE_LABELS = {
+    V: { thai: "ชุดกันสารเคมี", english: "Chemical protective suit", icon: "🧥" },
+    W: { thai: "หน้ากาก", english: "Mask", icon: "😷" },
+    X: { thai: "แว่นตา", english: "Safety goggles", icon: "🥽" },
+    Y: { thai: "รองเท้านิรภัย", english: "Safety shoes", icon: "🥾" },
+    Z: { thai: "ถุงมือ", english: "Gloves", icon: "🧤" },
+    AA: { thai: "หมวกคลุมผม", english: "Hair cover", icon: "🧢" }
   };
 
   function bilingualHTML(thai, english) {
@@ -7974,6 +7986,1119 @@
     "status": "Current"
   }
 ];
+  const REGISTER_WORKBOOK_DATA = {
+  "1": {
+    "composition": "2,4-D dimethyl ammonium",
+    "ratio": "84% W/V",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "2": {
+    "composition": "abamectin",
+    "ratio": "1.8% W/V",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "3": {
+    "composition": "acetamiprid",
+    "ratio": "20% W/V",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "4": {
+    "composition": "acetochlor",
+    "ratio": "50%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "5": {
+    "composition": "Amitraz",
+    "ratio": "200g/l",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "6": {
+    "composition": "2,6-bis[(4,6-dimethoxy-2-pyrimidinyl) oxy]",
+    "ratio": "10%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "7": {
+    "composition": "Bacillus thuringiensis subsp. Aizawai",
+    "ratio": "",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "8": {
+    "composition": "Bacillus thuringiensis subsp. Kurstaki",
+    "ratio": "18.60%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "9": {
+    "composition": "buprofezin",
+    "ratio": "25.00%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "10": {
+    "composition": "butachlor",
+    "ratio": "60%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "11": {
+    "composition": "carbaryl",
+    "ratio": "85%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "12": {
+    "composition": "carbendazim",
+    "ratio": "50.00%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "13": {
+    "composition": "carbosulfan",
+    "ratio": "20%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "14": {
+    "composition": "Carboxin",
+    "ratio": "70-90%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "15": {
+    "composition": "chlorfenapyr",
+    "ratio": "10.00%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "16": {
+    "composition": "chlorothalonil",
+    "ratio": "50.00%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "17": {
+    "composition": "clomazone",
+    "ratio": "48%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "18": {
+    "composition": "clomazone",
+    "ratio": "12%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "19": {
+    "composition": "cuprous oxide",
+    "ratio": "97%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "20": {
+    "composition": "cymoxanil",
+    "ratio": "64%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "21": {
+    "composition": "cypermethrin",
+    "ratio": "92.00%",
+    "personalProtectiveEquipment": []
+  },
+  "22": {
+    "composition": "cypermethrin",
+    "ratio": "35.00%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "23": {
+    "composition": "dichlorvos",
+    "ratio": "≥50%",
+    "personalProtectiveEquipment": []
+  },
+  "24": {
+    "composition": "difenoconazole",
+    "ratio": "25%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "25": {
+    "composition": "azoxystrobin",
+    "ratio": "20%",
+    "personalProtectiveEquipment": []
+  },
+  "26": {
+    "composition": "difenoconazole",
+    "ratio": "15.00%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "27": {
+    "composition": "dimethomorph",
+    "ratio": "50%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "28": {
+    "composition": "emamectin benzoate",
+    "ratio": "5.00%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "29": {
+    "composition": "ethaboxam",
+    "ratio": "10.40%",
+    "personalProtectiveEquipment": []
+  },
+  "30": {
+    "composition": "5-ethoxy-3-trichloromethyl-1,2,4-thiadiazole",
+    "ratio": "10-30%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "31": {
+    "composition": "fenoxaprop-P-ethyl",
+    "ratio": "6.9%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "32": {
+    "composition": "fipronil",
+    "ratio": "5.00%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "33": {
+    "composition": "fluazifop-P-butyl",
+    "ratio": "15.00%",
+    "personalProtectiveEquipment": []
+  },
+  "34": {
+    "composition": "fomesafen",
+    "ratio": "25.00%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "35": {
+    "composition": "gibberellic acid",
+    "ratio": "4.00%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "36": {
+    "composition": "haloxyfop",
+    "ratio": "10.80%",
+    "personalProtectiveEquipment": []
+  },
+  "37": {
+    "composition": "cyanamide; carbamonitril",
+    "ratio": "49 - 51%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "38": {
+    "composition": "Imidacloprid",
+    "ratio": "70%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "39": {
+    "composition": "Imidacloprid",
+    "ratio": "60%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "40": {
+    "composition": "Imidacloprid",
+    "ratio": "8 - 12%",
+    "personalProtectiveEquipment": []
+  },
+  "41": {
+    "composition": "indoxacarb",
+    "ratio": "15%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "42": {
+    "composition": "kasugamycin",
+    "ratio": "2%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "43": {
+    "composition": "Lambda cyhalothrin",
+    "ratio": "2.80%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "44": {
+    "composition": "mancozeb",
+    "ratio": "80.0%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "45": {
+    "composition": "niclosamide ethanolamine salt",
+    "ratio": "83.1%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "46": {
+    "composition": "novaluron",
+    "ratio": "10%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "47": {
+    "composition": "Oxadiazon",
+    "ratio": "25%",
+    "personalProtectiveEquipment": []
+  },
+  "48": {
+    "composition": "paclobutrazol",
+    "ratio": "10%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "49": {
+    "composition": "paclobutrazol",
+    "ratio": "25%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "50": {
+    "composition": "pendimethalin",
+    "ratio": "33%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "51": {
+    "composition": "Pretilachlor",
+    "ratio": "30%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "52": {
+    "composition": "Prochloraz",
+    "ratio": "38-42%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "53": {
+    "composition": "Prochloraz",
+    "ratio": "45%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "54": {
+    "composition": "prochloraz",
+    "ratio": "40%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "55": {
+    "composition": "Profenofos",
+    "ratio": "≥50%",
+    "personalProtectiveEquipment": []
+  },
+  "56": {
+    "composition": "propiconazole",
+    "ratio": "25%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "57": {
+    "composition": "Propineb",
+    "ratio": "70.0%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "58": {
+    "composition": "",
+    "ratio": "",
+    "personalProtectiveEquipment": []
+  },
+  "59": {
+    "composition": "pyrazosulfuron-ethyl",
+    "ratio": "10%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "60": {
+    "composition": "Pyridaben",
+    "ratio": "20.1%",
+    "personalProtectiveEquipment": []
+  },
+  "61": {
+    "composition": "quizalofop-P-ethyl",
+    "ratio": "5%",
+    "personalProtectiveEquipment": []
+  },
+  "62": {
+    "composition": "tebuconazole",
+    "ratio": "43%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "63": {
+    "composition": "tetraconazole",
+    "ratio": "",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "64": {
+    "composition": "starch",
+    "ratio": "50 - 70 %",
+    "personalProtectiveEquipment": []
+  },
+  "65": {
+    "composition": "Tricyclazole",
+    "ratio": "≥75.0%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "66": {
+    "composition": "glufosinate-ammonium",
+    "ratio": "15 %",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "67": {
+    "composition": "propargite",
+    "ratio": "57 %",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "68": {
+    "composition": "cypermethrin",
+    "ratio": "4 %",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "69": {
+    "composition": "thiamethoxam",
+    "ratio": "35 %",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "70": {
+    "composition": "fosetyl-aluminium",
+    "ratio": "80 %",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "71": {
+    "composition": "thiamethoxam",
+    "ratio": "14.1 %",
+    "personalProtectiveEquipment": []
+  },
+  "72": {
+    "composition": "oxyfluorofen",
+    "ratio": "23.5 %",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "73": {
+    "composition": "kasugamycin",
+    "ratio": "3%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "74": {
+    "composition": "spiromesifen",
+    "ratio": "24%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "75": {
+    "composition": "dimethomorph",
+    "ratio": "15%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "76": {
+    "composition": "pyraclostrobin",
+    "ratio": "25%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "77": {
+    "composition": "pymetrozine",
+    "ratio": "50%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "78": {
+    "composition": "spirodiclofen",
+    "ratio": "24%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "79": {
+    "composition": "fipronil",
+    "ratio": "80%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "80": {
+    "composition": "4-phenoxyphenyl (RS)-2-(2-pyridyloxy)propyl ether",
+    "ratio": "10%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "81": {
+    "composition": "lufenuron",
+    "ratio": "40%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "82": {
+    "composition": "bifenthrin",
+    "ratio": "10%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "83": {
+    "composition": "fipronil",
+    "ratio": "20%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "84": {
+    "composition": "lambda cyhalothrin",
+    "ratio": "10%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "85": {
+    "composition": "penoxsulam",
+    "ratio": "2.5%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "86": {
+    "composition": "mesotrione",
+    "ratio": "8%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "87": {
+    "composition": "S-metolachlor",
+    "ratio": "96%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "88": {
+    "composition": "cyhalofop-butyl",
+    "ratio": "50%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "89": {
+    "composition": "flumioxazin",
+    "ratio": "50%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "90": {
+    "composition": "flonicamid",
+    "ratio": "50%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "91": {
+    "composition": "glufosinate",
+    "ratio": "95%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "92": {
+    "composition": "clethodim",
+    "ratio": "24%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "93": {
+    "composition": "flometoquin",
+    "ratio": "10%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "94": {
+    "composition": "flometoquin",
+    "ratio": "5.17%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "95": {
+    "composition": "Profenofos",
+    "ratio": "95%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "96": {
+    "composition": "chlorfenapyr",
+    "ratio": "19%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "97": {
+    "composition": "nicosulfuron",
+    "ratio": "6%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "98": {
+    "composition": "Acetaniprid",
+    "ratio": "22.7%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "99": {
+    "composition": "Atrazine",
+    "ratio": "90%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "100": {
+    "composition": "Sodium-Nitrophenolate",
+    "ratio": "85%",
+    "personalProtectiveEquipment": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "AA"
+    ]
+  },
+  "101": {
+    "composition": "Bifenthrin",
+    "ratio": "5%",
+    "personalProtectiveEquipment": []
+  }
+};
+  defaultData.forEach(record => {
+    const source = REGISTER_WORKBOOK_DATA[String(record.sequence)];
+    if (source) Object.assign(record, source);
+  });
   const thaiChemicalNames = {
     "Acetochlor 50% W/V EC": "อะซีโตคลอร์ 50% W/V EC",
     "24D 84 SL [LABAN]": "24ดี 84 เอสแอล [LABAN]",
@@ -8088,7 +9213,7 @@
     "Toluene|108-88-3",
     "Hydrochloric Acid|7647-01-0"
   ]);
-  const SDS_DATASET_VERSION = "xlsx-pesticide-2026-09-29-v2";
+  const SDS_DATASET_VERSION = "xlsx-pesticide-2026-09-29-v3";
   if (localStorage.getItem("sdsDatasetVersion") !== SDS_DATASET_VERSION) {
     localStorage.removeItem("sdsData");
     localStorage.setItem("sdsDatasetVersion", SDS_DATASET_VERSION);
@@ -8174,6 +9299,9 @@
           sdsLanguages: Array.isArray(item.sdsLanguages) && item.sdsLanguages.length ? item.sdsLanguages : (seed.sdsLanguages || []),
           sequence: item.sequence || seed.sequence, group: item.group || seed.group,
           flashPoint: librarySeed ? seed.flashPoint : (item.flashPoint || seed.flashPoint),
+          composition: item.composition || seed.composition || "",
+          ratio: item.ratio || seed.ratio || "",
+          personalProtectiveEquipment: Array.isArray(item.personalProtectiveEquipment) ? item.personalProtectiveEquipment : (seed.personalProtectiveEquipment || []),
           firstAidMeasures: Array.isArray(item.firstAidMeasures) ? item.firstAidMeasures : (seed.firstAidMeasures || []),
           firefightingMeasures: Array.isArray(item.firefightingMeasures) ? item.firefightingMeasures : (seed.firefightingMeasures || []),
           hazards: normalizeHazards(item.hazards, seed.hazards) }, seed)
@@ -8578,6 +9706,7 @@
     const pictograms = pictogramCellMarkup(item);
     const firstAid = measureListMarkup(item.firstAidMeasures, "firstAid");
     const firefighting = measureListMarkup(item.firefightingMeasures, "firefighting");
+    const personalProtectiveEquipment = ppeListMarkup(item.personalProtectiveEquipment);
     const body = document.getElementById("sdsQuickBody");
     body.innerHTML = `
       <div class="sds-register-title">ทะเบียนสารเคมี<small>Chemical Register</small></div>
@@ -8591,7 +9720,7 @@
         <tr><th>จุดวาบไฟ (°C)<small>Flash point (°C)</small></th><td colspan="3">${bilingualDataMarkup(formatFlashPointValue(item.flashPoint))}</td></tr>
         <tr><th>มาตรการปฐมพยาบาล<small>First aid measures</small></th><td colspan="3" class="register-measures">${firstAid}</td></tr>
         <tr><th>มาตรการดับเพลิง<small>Firefighting measures</small></th><td colspan="3" class="register-measures">${firefighting}</td></tr>
-        <tr><th>อุปกรณ์ป้องกันส่วนบุคคล<small>Personal protective equipment</small></th><td colspan="3" class="register-pictograms">${pictograms}</td></tr>
+        <tr><th>อุปกรณ์ป้องกันส่วนบุคคล<small>Personal protective equipment</small></th><td colspan="3" class="register-ppe">${personalProtectiveEquipment}</td></tr>
       </table>
       <div class="sds-quick-actions sds-language-actions">
         <div style="width:100%;"><span class="bilingual-label">เอกสาร SDS ต้นฉบับ<small>Original SDS documents</small></span></div>
@@ -9158,6 +10287,13 @@
       const detail = String(item.value || item.detail || "").trim();
       return `<span class="measure-item"><span class="measure-label">${measureIconMarkup(item, kind)}<span class="measure-label-text">${escapeHTML(item.thai || "")} <small>${escapeHTML(item.english || "")}</small></span></span>${detail ? `<span class="measure-value">${escapeHTML(detail)}</span>` : ""}</span>`;
     }).join("")}</div>`;
+  }
+
+  function ppeListMarkup(columns) {
+    const selected = Array.isArray(columns) ? columns : [];
+    const items = selected.map(column => PPE_LABELS[String(column || "").trim()]).filter(Boolean);
+    if (!items.length) return "-";
+    return `<div class="ppe-list">${items.map(item => `<span class="ppe-item"><span class="ppe-icon" aria-hidden="true">${item.icon}</span><span>${escapeHTML(item.thai)}<small>${escapeHTML(item.english)}</small></span></span>`).join("")}</div>`;
   }
 
   function renderHazardFormOptions() {
