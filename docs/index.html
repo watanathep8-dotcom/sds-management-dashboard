@@ -9075,10 +9075,10 @@
   function measureIconMarkup(item, kind) {
     const text = `${item?.thai || ""} ${item?.english || ""} ${item?.value || ""} ${item?.detail || ""}`.toLowerCase();
     const icon = kind === "firstAid"
-      ? (/(สูดดม|inhal|หายใจ)/i.test(text) ? "🫁"
-        : /(ผิวหนัง|skin|สัมผัส)/i.test(text) ? "🖐️"
-        : /(ตา|eye)/i.test(text) ? "👁️"
-        : /(กลืน|กิน|ingestion|swallow)/i.test(text) ? "🍽️" : "🩺")
+      ? (/(สูดดม|inhal|หายใจ)/i.test(text) ? "👃"
+        : /(ดวงตา|eye)/i.test(text) ? "👁️"
+        : /(ผิวหนัง|skin)/i.test(text) ? "🖐️"
+        : /(กลืน|กิน|ingestion|swallow)/i.test(text) ? "👄" : "🩺")
       : (/(น้ำ|water|ละออง|spray)/i.test(text) ? "💧"
         : /(โฟม|foam)/i.test(text) ? "🫧"
         : /(ผง|chemical powder|dry chemical)/i.test(text) ? "🧯"
