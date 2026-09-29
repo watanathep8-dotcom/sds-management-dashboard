@@ -8421,8 +8421,10 @@
   function publicSdsUrl(item) {
     const snapshot = qrRecordSnapshot(item);
     const url = new URL(window.location.origin + window.location.pathname);
+    // Keep the QR payload short: the public page loads the latest SDS record
+    // from the configured API/Apps Script by ID. Older QR codes that contain
+    // a full #data snapshot remain supported by openSdsFromQrUrl().
     url.searchParams.set("sds", snapshot.i);
-    url.hash = "data=" + encodeQrPayload(JSON.stringify(snapshot));
     return url.toString();
   }
 
