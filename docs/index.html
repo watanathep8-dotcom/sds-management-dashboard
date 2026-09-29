@@ -329,9 +329,10 @@
     th:nth-child(11), td:nth-child(11) { width: 4%; }
     th:nth-child(12), td:nth-child(12) { width: 4%; }
     th:nth-child(13), td:nth-child(13) { width: 4%; }
-   .action-column, .action-cell { text-align: center; }
+    .action-column, .action-cell { text-align: center; }
     .qr-column, .qr-cell { text-align: center; }
     .qr-cell { white-space: normal; }
+    .thai-sds-column { display: none !important; }
     .qr-btn { border: 1px solid #a7f3d0; background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #047857; border-radius: 9px; padding: 7px 8px; font-size: 11px; font-weight: 800; display: inline-flex; flex-direction: column; align-items: center; gap: 2px; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
     .qr-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 7px 14px rgba(5, 150, 105, .2); background: #bbf7d0; }
     .qr-btn small { font-size: 9px; font-weight: 600; opacity: .78; }
@@ -791,7 +792,7 @@
             <th><span class="bilingual-label">จุดวาบไฟ<small>Flash Point (°C)</small></span></th>
             <th><span class="bilingual-label">มาตรการปฐมพยาบาล<small>First aid measures</small></span></th>
             <th><span class="bilingual-label">มาตรการดับเพลิง<small>Firefighting measures</small></span></th>
-            <th><span class="bilingual-label">SDS ภาษาไทย<small>Thai SDS</small></span></th>
+            <th class="thai-sds-column"><span class="bilingual-label">SDS ภาษาไทย<small>Thai SDS</small></span></th>
             <th><span class="bilingual-label">SDS ภาษาอังกฤษ<small>English SDS</small></span></th>
             <th class="qr-column"><span class="bilingual-label">QR Code<small>พิมพ์ QR</small></span></th>
             <th class="action-column"><span class="bilingual-label">แก้ไข<small>Edit</small></span></th>
@@ -9358,7 +9359,7 @@
     if (filtered.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="13"><div class="empty-state"><span class="bilingual-label">ไม่พบข้อมูล SDS<small>No SDS data found</small></span></div></td>
+          <td colspan="12"><div class="empty-state"><span class="bilingual-label">ไม่พบข้อมูล SDS<small>No SDS data found</small></span></div></td>
         </tr>`;
       return;
     }
@@ -9377,7 +9378,7 @@
           <td class="detail-cell">${bilingualDataMarkup(formatFlashPointValue(item.flashPoint))}</td>
           <td class="detail-cell">${measureListMarkup(item.firstAidMeasures, "firstAid")}</td>
           <td class="detail-cell">${measureListMarkup(item.firefightingMeasures, "firefighting")}</td>
-          <td>${languageSdsCell(item, "Thai")}</td>
+          <td class="thai-sds-column">${languageSdsCell(item, "Thai")}</td>
          <td>${languageSdsCell(item, "English")}</td>
           <td class="qr-cell">
             <button class="qr-btn" type="button" title="พิมพ์ QR Code" onclick="showQrCode(decodeURIComponent('${encodeURIComponent(String(item.id))}'))"><span class="bilingual-label">▦ พิมพ์ QR<small>Print QR</small></span></button>
