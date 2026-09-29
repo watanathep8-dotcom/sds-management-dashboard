@@ -217,6 +217,15 @@
     .ppe-item small { color: #64748b; font-size: 9px; font-weight: 600; }
     .ppe-icon { display: inline-block; width: 34px; height: 34px; object-fit: contain; flex: 0 0 34px; animation: ppeIconFloat 3.2s ease-in-out infinite; }
     .ppe-item > span:last-child { display: flex; flex-direction: column; line-height: 1.2; }
+    .ppe-form-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+    .ppe-check-item { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: #f8fbff; cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+    .ppe-check-item:hover { border-color: #93c5fd; background: #eff6ff; transform: translateY(-1px); }
+    .ppe-check-item:has(input:checked) { border-color: #2563eb; background: #eff6ff; box-shadow: 0 0 0 2px rgba(37, 99, 235, .10); }
+    .ppe-check-item input { flex: 0 0 auto; accent-color: #2563eb; }
+    .ppe-form-icon { width: 38px; height: 38px; object-fit: contain; flex: 0 0 38px; }
+    .ppe-check-text { min-width: 0; color: #1e3a8a; font-size: 11px; font-weight: 800; line-height: 1.2; }
+    .ppe-check-text small { display: block; color: #64748b; font-size: 9px; font-weight: 600; margin-top: 2px; }
+    @media (max-width: 520px) { .ppe-form-options { grid-template-columns: 1fr; } }
     .flame-icon {
       display: inline-block; font-size: 28px; transform-origin: center bottom;
       filter: drop-shadow(0 0 3px rgba(249, 115, 22, 0.55));
@@ -872,6 +881,14 @@
             <input class="form-control" id="cas" placeholder="67-64-1">
           </div>
           <div class="form-group">
+            <label><span class="bilingual-label">องค์ประกอบ / ข้อมูลเกี่ยวกับส่วนผสม<small>Composition / ingredients</small></span></label>
+            <textarea class="form-control" id="composition" rows="2" placeholder="เช่น Acetochlor"></textarea>
+          </div>
+          <div class="form-group">
+            <label><span class="bilingual-label">อัตราส่วน (%)<small>Concentration (%)</small></span></label>
+            <input class="form-control" id="ratio" placeholder="เช่น 50% W/V">
+          </div>
+          <div class="form-group">
             <label><span class="bilingual-label">จุดวาบไฟ<small>Flash Point (°C)</small></span></label>
             <input class="form-control" id="flashPoint" placeholder="เช่น 71°C (Closed cup)">
           </div>
@@ -908,7 +925,13 @@
       </div>
 
       <div class="form-section">
-        <div class="form-section-title"><span class="bilingual-label">5. เอกสาร SDS<small>5. SDS Document</small></span></div>
+        <div class="form-section-title"><span class="bilingual-label">5. อุปกรณ์ป้องกันส่วนบุคคล<small>5. Personal protective equipment</small></span></div>
+        <div class="form-note">เลือกได้หลายรายการ / Select all that apply</div>
+        <div class="ppe-form-options" id="ppeOptions"></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><span class="bilingual-label">6. เอกสาร SDS<small>6. SDS Document</small></span></div>
         <div class="upload-box">
           📄 <span class="bilingual-label">อัปโหลดเอกสารข้อมูลความปลอดภัย<small>Upload Safety Data Sheet</small></span><br>
           <input type="file" id="sdsFile" accept=".pdf">
@@ -9513,6 +9536,9 @@
       s: compact(item.supplier, 150),
      h: Array.isArray(item.hazards) ? item.hazards.slice(0, 6) : [],
       f: compact(item.flashPoint, 60),
+     co: compact(item.composition, 180),
+     r: compact(item.ratio, 80),
+     pp: Array.isArray(item.personalProtectiveEquipment) ? item.personalProtectiveEquipment.slice(0, 6) : [],
      a: measures(item.firstAidMeasures, "value"),
      m: measures(item.firefightingMeasures, "detail"),
      l: getSdsLanguages(item),
@@ -9542,6 +9568,9 @@
       supplier: snapshot.supplier || snapshot.s || "",
       hazards: Array.isArray(snapshot.hazards) ? snapshot.hazards : (Array.isArray(snapshot.h) ? snapshot.h : []),
       flashPoint: snapshot.flashPoint || snapshot.f || "",
+      composition: snapshot.composition || snapshot.co || "",
+      ratio: snapshot.ratio || snapshot.r || "",
+      personalProtectiveEquipment: Array.isArray(snapshot.personalProtectiveEquipment) ? snapshot.personalProtectiveEquipment : (Array.isArray(snapshot.pp) ? snapshot.pp : []),
       firstAidMeasures: Array.isArray(snapshot.firstAidMeasures) ? snapshot.firstAidMeasures : (Array.isArray(snapshot.a) ? snapshot.a.map(measure => ({ thai: measure.thai || measure.t || "", english: measure.english || measure.e || "", value: measure.value || measure.v || "" })) : []),
       firefightingMeasures: Array.isArray(snapshot.firefightingMeasures) ? snapshot.firefightingMeasures : (Array.isArray(snapshot.m) ? snapshot.m.map(measure => ({ thai: measure.thai || measure.t || "", english: measure.english || measure.e || "", detail: measure.detail || measure.v || "" })) : []),
       sdsLanguages: Array.isArray(snapshot.sdsLanguages) ? snapshot.sdsLanguages : (Array.isArray(snapshot.l) ? snapshot.l : []),
@@ -9817,6 +9846,9 @@
         sequence: snapshot.sequence || liveItem.sequence,
         group: snapshot.group || liveItem.group,
         hazards: snapshot.hazards?.length ? snapshot.hazards : liveItem.hazards,
+        composition: snapshot.composition || liveItem.composition,
+        ratio: snapshot.ratio || liveItem.ratio,
+        personalProtectiveEquipment: snapshot.personalProtectiveEquipment?.length ? snapshot.personalProtectiveEquipment : liveItem.personalProtectiveEquipment,
         firstAidMeasures: snapshot.firstAidMeasures?.length ? snapshot.firstAidMeasures : liveItem.firstAidMeasures,
         firefightingMeasures: snapshot.firefightingMeasures?.length ? snapshot.firefightingMeasures : liveItem.firefightingMeasures,
         pdfUrl: snapshot.pdfUrl || liveItem.pdfUrl,
@@ -9851,6 +9883,8 @@
     const hazardSearch = document.getElementById("hazardListSearch");
     if (hazardSearch) hazardSearch.value = "";
     renderHazardFormOptions();
+    renderPpeFormOptions();
+    populatePpeFields([]);
     document.getElementById("drawerTitle").innerHTML = bilingualHTML("เพิ่มข้อมูล SDS", "Add SDS");
     openDrawer();
   }
@@ -10116,6 +10150,8 @@
       chemicalThai,
       chemicalEnglish,
       cas,
+      composition: document.getElementById("composition").value.trim(),
+      ratio: document.getElementById("ratio").value.trim(),
       sequence: Number(document.getElementById("sequence").value) || (existing ? existing.sequence : Math.max(0, ...sdsData.map(item => Number(item.sequence) || 0)) + 1),
       group: document.getElementById("group").value.trim() || (existing ? existing.group : "Pesticide"),
       supplier: pdfAutoExtractedData.supplier || (existing ? (existing.supplier || "") : ""),
@@ -10131,6 +10167,7 @@
      flashPoint: formatFlashPointValue(document.getElementById("flashPoint").value.trim() || pdfAutoExtractedData.flashPoint || (existing ? (existing.flashPoint || "") : "")),
      firstAidMeasures: measuresFromForm(FIRST_AID_FIELDS, "value"),
      firefightingMeasures: measuresFromForm(FIREFIGHTING_FIELDS, "detail"),
+     personalProtectiveEquipment: selectedPpeFromForm(),
      hasPdf: Boolean(existing && (existing.hasPdf || existing.pdfUrl || existing.pdfFileId))
     };
     delete record.revisionDate;
@@ -10178,9 +10215,13 @@
     document.getElementById("cas").value = item.cas;
     document.getElementById("sequence").value = item.sequence || "";
     document.getElementById("group").value = item.group || "";
+    document.getElementById("composition").value = item.composition || "";
+    document.getElementById("ratio").value = item.ratio || "";
     document.getElementById("flashPoint").value = formatFlashPointValue(item.flashPoint || "");
     populateMeasureFields(FIRST_AID_FIELDS, item.firstAidMeasures);
     populateMeasureFields(FIREFIGHTING_FIELDS, item.firefightingMeasures);
+    renderPpeFormOptions();
+    populatePpeFields(item.personalProtectiveEquipment);
     const selectedHazards = new Set(item.hazards || []);
     document.querySelectorAll(".hazardCheck").forEach(check => {
       check.checked = selectedHazards.has(check.value);
@@ -10336,6 +10377,29 @@
 
   function filterHazardOptions() {
     renderHazardFormOptions();
+  }
+
+  function renderPpeFormOptions() {
+    const container = document.getElementById("ppeOptions");
+    if (!container) return;
+    const selected = new Set(Array.from(document.querySelectorAll(".ppeCheck:checked")).map(input => input.value));
+    container.innerHTML = Object.entries(PPE_LABELS).map(([code, item]) => `
+      <label class="ppe-check-item">
+        <input class="ppeCheck" type="checkbox" value="${escapeHTML(code)}"${selected.has(code) ? " checked" : ""}>
+        <img class="ppe-form-icon" src="${escapeHTML(item.image)}" alt="${escapeHTML(item.thai)} / ${escapeHTML(item.english)}">
+        <span class="ppe-check-text">${escapeHTML(item.thai)}<small>${escapeHTML(item.english)}</small></span>
+      </label>`).join("");
+  }
+
+  function selectedPpeFromForm() {
+    return Array.from(document.querySelectorAll(".ppeCheck:checked")).map(input => input.value);
+  }
+
+  function populatePpeFields(values) {
+    const selected = new Set(Array.isArray(values) ? values.map(value => String(value || "").trim()) : []);
+    document.querySelectorAll(".ppeCheck").forEach(input => {
+      input.checked = selected.has(input.value);
+    });
   }
 
   function renderHazardOverview() {
@@ -11133,6 +11197,8 @@
         chemicalThai: chemicalThai,
         chemicalEnglish: chemicalEnglish,
         cas: document.getElementById("cas").value.trim(),
+        composition: document.getElementById("composition").value.trim(),
+        ratio: document.getElementById("ratio").value.trim(),
         sequence: Number(document.getElementById("sequence").value) || (existing ? existing.sequence : Math.max(0, ...sdsData.map(function (item) { return Number(item.sequence) || 0; })) + 1),
         group: document.getElementById("group").value.trim() || (existing ? existing.group : "Pesticide"),
         supplier: auto.supplier || (existing ? (existing.supplier || "") : ""),
@@ -11144,7 +11210,8 @@
         thaiSds: typeof auto.thaiSds === "boolean" ? auto.thaiSds : (existing ? Boolean(existing.thaiSds) : false),
         flashPoint: formatFlashPointValue(document.getElementById("flashPoint").value.trim() || auto.flashPoint || (existing ? (existing.flashPoint || "") : "")),
         firstAidMeasures: measuresFromForm(FIRST_AID_FIELDS, "value"),
-        firefightingMeasures: measuresFromForm(FIREFIGHTING_FIELDS, "detail")
+        firefightingMeasures: measuresFromForm(FIREFIGHTING_FIELDS, "detail"),
+        personalProtectiveEquipment: selectedPpeFromForm()
       };
     }
 

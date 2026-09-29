@@ -11,7 +11,9 @@ var SDS_HEADERS = [
   "status", "signalWord", "hazards", "pdfFileId", "pdfName", "updatedAt",
   "reviewDate", "thaiSds", "language", "flashPoint", "emergencyResponse", "sdsLanguages",
   "chemicalThai", "chemicalEnglish", "thaiPdfFileId", "thaiPdfName",
-  "englishPdfFileId", "englishPdfName", "pdfUrl", "thaiPdfUrl", "englishPdfUrl"
+  "englishPdfFileId", "englishPdfName", "pdfUrl", "thaiPdfUrl", "englishPdfUrl",
+  "composition", "ratio", "personalProtectiveEquipment", "firstAidMeasures", "firefightingMeasures",
+  "sequence", "group"
 ];
 
 // Destructive actions require a second confirmation in the dashboard and
@@ -179,7 +181,14 @@ function migrateCatalogFromGithub() {
       englishPdfName,
       englishPdfUrl,
       thaiPdfUrl,
-      englishPdfUrl
+      englishPdfUrl,
+      clean_(seed.composition),
+      clean_(seed.ratio),
+      normalizePpe_(seed.personalProtectiveEquipment).join("|"),
+      serializeMeasures_(seed.firstAidMeasures),
+      serializeMeasures_(seed.firefightingMeasures),
+      Number(seed.sequence) || "",
+      clean_(seed.group)
     ];
 
     if (existing[id]) sheet.getRange(existing[id], 1, 1, SDS_HEADERS.length).setValues([row]);
@@ -304,7 +313,14 @@ function saveSds(record, fileData) {
       englishPdfName,
       pdfUrl,
       thaiPdfUrl,
-      englishPdfUrl
+      englishPdfUrl,
+      normalized.composition,
+      normalized.ratio,
+      normalized.personalProtectiveEquipment.join("|"),
+      serializeMeasures_(normalized.firstAidMeasures),
+      serializeMeasures_(normalized.firefightingMeasures),
+      normalized.sequence,
+      normalized.group
     ];
 
     if (existing) {
@@ -394,7 +410,14 @@ function normalizeRecord_(record) {
     language: language,
     flashPoint: clean_(record.flashPoint),
     emergencyResponse: clean_(record.emergencyResponse),
-    sdsLanguages: sdsLanguages
+    sdsLanguages: sdsLanguages,
+    composition: clean_(record.composition),
+    ratio: clean_(record.ratio),
+    personalProtectiveEquipment: normalizePpe_(record.personalProtectiveEquipment),
+    firstAidMeasures: normalizeMeasures_(record.firstAidMeasures),
+    firefightingMeasures: normalizeMeasures_(record.firefightingMeasures),
+    sequence: Number(record.sequence) || "",
+    group: clean_(record.group)
   };
 }
 
@@ -418,6 +441,34 @@ function normalizeLanguages_(value, language, thaiSds) {
   if (thaiSds && result.indexOf("Thai") === -1) result.push("Thai");
   if (!result.length && ["Thai", "English"].indexOf(language) !== -1) result.push(language);
   return result.filter(function(item, index) { return result.indexOf(item) === index; });
+}
+
+function normalizePpe_(value) {
+  var allowed = ["V", "W", "X", "Y", "Z", "AA"];
+  var values = Array.isArray(value) ? value : String(value || "").split(/[|,]/);
+  return values.map(function(item) { return clean_(item).toUpperCase(); }).filter(function(item, index, list) {
+    return allowed.indexOf(item) !== -1 && list.indexOf(item) === index;
+  });
+}
+
+function normalizeMeasures_(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(function(item) {
+    return {
+      thai: clean_(item && item.thai),
+      english: clean_(item && item.english),
+      value: clean_(item && (item.value !== undefined ? item.value : item.detail))
+    };
+  }).filter(function(item) { return item.thai || item.english || item.value; });
+}
+
+function serializeMeasures_(value) {
+  return JSON.stringify(normalizeMeasures_(value));
+}
+
+function parseMeasures_(value) {
+  if (!value) return [];
+  try { return normalizeMeasures_(JSON.parse(String(value))); } catch (ignored) { return []; }
 }
 
 function rowToObject_(row) {
@@ -461,7 +512,14 @@ function rowToObject_(row) {
     language: language,
     flashPoint: String(row[15] || ""),
     emergencyResponse: String(row[16] || ""),
-    sdsLanguages: normalizeLanguages_(String(row[17] || "").split("|"), language, thaiSds)
+    sdsLanguages: normalizeLanguages_(String(row[17] || "").split("|"), language, thaiSds),
+    composition: String(row[27] || ""),
+    ratio: String(row[28] || ""),
+    personalProtectiveEquipment: normalizePpe_(String(row[29] || "").split("|")),
+    firstAidMeasures: parseMeasures_(row[30]),
+    firefightingMeasures: parseMeasures_(row[31]),
+    sequence: Number(row[32]) || "",
+    group: String(row[33] || "")
   };
 }
 
