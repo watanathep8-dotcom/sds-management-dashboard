@@ -569,7 +569,8 @@
     .sds-register-title { text-align: center; color: #1e3a8a; font-size: 17px; font-weight: 800; margin-bottom: 12px; }
     .sds-register-title small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 600; }
     .sds-register-table { width: auto; max-width: 100%; min-width: 0; margin: 0 auto; border-collapse: collapse; table-layout: auto; background: #fff; }
-    .sds-register-table th, .sds-register-table td { border: 1px solid #475569; padding: 8px; vertical-align: top; color: #1e293b; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+    .sds-register-table th, .sds-register-table td { border: 1px solid #475569; padding: 6px 8px; vertical-align: top; color: #1e293b; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
+    .sds-register-table th:nth-child(n), .sds-register-table td:nth-child(n) { width: auto; min-width: 0; }
     .sds-register-table th { width: auto; background: #f8fafc; text-align: left; font-weight: 800; }
     .sds-register-table th small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; font-weight: 600; }
     .sds-register-table .register-name { text-align: center; font-weight: 800; color: #1e3a8a; font-size: 15px; }
@@ -579,12 +580,9 @@
     .sds-register-table .register-measures .measure-item { padding-bottom: 4px; }
     .sds-register-table .register-measures .measure-value { font-size: 11px; }
     .sds-register-table .pictogram-set { justify-content: flex-start; }
-    .sds-register-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; color: #334155; font-size: 12px; }
-    .sds-register-meta div { border-bottom: 1px solid #94a3b8; padding: 7px 4px; }
-    .sds-register-meta small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
     .sds-quick-modal.sds-quick-fullscreen { padding: 0; }
     .sds-quick-modal.sds-quick-fullscreen .sds-quick-dialog { width: 100vw; max-width: none; height: 100vh; max-height: none; border-radius: 0; }
-    @media (max-width: 600px) { .sds-quick-modal { padding: 8px; } .sds-quick-dialog { width: 100%; max-height: 96vh; border-radius: 13px; } .sds-quick-header { padding: 12px; } .sds-quick-header-actions { gap: 4px; } .sds-quick-fullscreen-toggle { min-height: 30px; padding: 4px 6px; } .sds-quick-fullscreen-toggle small { display: none; } .sds-quick-body { padding: 12px; } .sds-quick-grid { grid-template-columns: 1fr; } .sds-register-table { width: auto; max-width: 100%; } .sds-register-table th, .sds-register-table td { padding: 6px 5px; font-size: 10px; } .sds-register-table .register-name { font-size: 13px; } .sds-register-meta { grid-template-columns: 1fr; gap: 5px; } }
+    @media (max-width: 600px) { .sds-quick-modal { padding: 8px; } .sds-quick-dialog { width: 100%; max-height: 96vh; border-radius: 13px; } .sds-quick-header { padding: 12px; } .sds-quick-header-actions { gap: 4px; } .sds-quick-fullscreen-toggle { min-height: 30px; padding: 4px 6px; } .sds-quick-fullscreen-toggle small { display: none; } .sds-quick-body { padding: 12px; } .sds-quick-grid { grid-template-columns: 1fr; } .sds-register-table { width: auto; max-width: 100%; } .sds-register-table th, .sds-register-table td { padding: 6px 5px; font-size: 10px; } .sds-register-table .register-name { font-size: 13px; } }
 
     @keyframes logoPulse {
       0%, 100% { transform: translateY(0) rotate(-3deg) scale(1); box-shadow: 0 3px 8px rgba(30,64,175,.22); }
@@ -8595,10 +8593,6 @@
         <tr><th>มาตรการดับเพลิง<small>Firefighting measures</small></th><td colspan="3" class="register-measures">${firefighting}</td></tr>
         <tr><th>อุปกรณ์ป้องกันส่วนบุคคล<small>Personal protective equipment</small></th><td colspan="3" class="register-pictograms">${pictograms}</td></tr>
       </table>
-      <div class="sds-register-meta">
-        <div>ผู้บันทึก / Recorded by: ระบบ SDS<small>SDS Management system</small></div>
-        <div>วันที่ใช้งาน / Date used: -<small>Not provided in SDS data</small></div>
-      </div>
       <div class="sds-quick-actions sds-language-actions">
         <div style="width:100%;"><span class="bilingual-label">เอกสาร SDS ต้นฉบับ<small>Original SDS documents</small></span></div>
         ${languageButtons || `<div class="sds-language-empty">ไม่พบไฟล์ SDS สำหรับเปิดจาก QR / No public SDS PDF is available for this QR</div>`}
