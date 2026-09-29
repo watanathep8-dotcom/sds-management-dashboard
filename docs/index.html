@@ -215,7 +215,8 @@
     .ppe-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; }
     .ppe-item { display: inline-flex; align-items: center; gap: 4px; padding: 4px 6px; border: 1px solid #dbe4ef; border-radius: 8px; background: #f8fbff; color: #1e3a8a; font-size: 10px; font-weight: 800; }
     .ppe-item small { color: #64748b; font-size: 9px; font-weight: 600; }
-    .ppe-icon { display: inline-flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; }
+    .ppe-icon { display: inline-block; width: 34px; height: 34px; object-fit: contain; flex: 0 0 34px; animation: ppeIconFloat 3.2s ease-in-out infinite; }
+    .ppe-item > span:last-child { display: flex; flex-direction: column; line-height: 1.2; }
     .flame-icon {
       display: inline-block; font-size: 28px; transform-origin: center bottom;
       filter: drop-shadow(0 0 3px rgba(249, 115, 22, 0.55));
@@ -587,6 +588,11 @@
     .sds-quick-modal.sds-quick-fullscreen { padding: 0; }
     .sds-quick-modal.sds-quick-fullscreen .sds-quick-dialog { width: 100vw; max-width: none; height: 100vh; max-height: none; border-radius: 0; }
     @media (max-width: 600px) { .sds-quick-modal { padding: 8px; } .sds-quick-dialog { width: 100%; max-height: 96vh; border-radius: 13px; } .sds-quick-header { padding: 12px; } .sds-quick-header-actions { gap: 4px; } .sds-quick-fullscreen-toggle { min-height: 30px; padding: 4px 6px; } .sds-quick-fullscreen-toggle small { display: none; } .sds-quick-body { padding: 12px; } .sds-quick-grid { grid-template-columns: 1fr; } .sds-register-table { width: auto; max-width: 100%; } .sds-register-table th, .sds-register-table td { padding: 6px 5px; font-size: 10px; } .sds-register-table .register-name { font-size: 13px; } }
+
+    @keyframes ppeIconFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-2px) scale(1.03); }
+    }
 
     @keyframes logoPulse {
       0%, 100% { transform: translateY(0) rotate(-3deg) scale(1); box-shadow: 0 3px 8px rgba(30,64,175,.22); }
@@ -1062,12 +1068,12 @@
     English: { thai: "ภาษาอังกฤษ", english: "English" }
   };
   const PPE_LABELS = {
-    V: { thai: "ชุดกันสารเคมี", english: "Chemical protective suit", icon: "🧥" },
-    W: { thai: "หน้ากาก", english: "Mask", icon: "😷" },
-    X: { thai: "แว่นตา", english: "Safety goggles", icon: "🥽" },
-    Y: { thai: "รองเท้านิรภัย", english: "Safety shoes", icon: "🥾" },
-    Z: { thai: "ถุงมือ", english: "Gloves", icon: "🧤" },
-    AA: { thai: "หมวกคลุมผม", english: "Hair cover", icon: "🧢" }
+    V: { thai: "ชุดกันสารเคมี", english: "Chemical protective suit", image: "assets/ppe/ppe-v.png" },
+    W: { thai: "หน้ากาก", english: "Mask", image: "assets/ppe/ppe-w.png" },
+    X: { thai: "แว่นตา", english: "Safety goggles", image: "assets/ppe/ppe-x.png" },
+    Y: { thai: "รองเท้านิรภัย", english: "Safety shoes", image: "assets/ppe/ppe-y.png" },
+    Z: { thai: "ถุงมือ", english: "Gloves", image: "assets/ppe/ppe-z.png" },
+    AA: { thai: "หมวกคลุมผม", english: "Hair cover", image: "assets/ppe/ppe-aa.png" }
   };
 
   function bilingualHTML(thai, english) {
@@ -10293,7 +10299,7 @@
     const selected = Array.isArray(columns) ? columns : [];
     const items = selected.map(column => PPE_LABELS[String(column || "").trim()]).filter(Boolean);
     if (!items.length) return "-";
-    return `<div class="ppe-list">${items.map(item => `<span class="ppe-item"><span class="ppe-icon" aria-hidden="true">${item.icon}</span><span>${escapeHTML(item.thai)}<small>${escapeHTML(item.english)}</small></span></span>`).join("")}</div>`;
+    return `<div class="ppe-list">${items.map(item => `<span class="ppe-item"><img class="ppe-icon" src="${item.image}" alt="${escapeHTML(item.thai)} / ${escapeHTML(item.english)}"><span>${escapeHTML(item.thai)}<small>${escapeHTML(item.english)}</small></span></span>`).join("")}</div>`;
   }
 
   function renderHazardFormOptions() {
