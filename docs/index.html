@@ -1046,6 +1046,7 @@
 
   function filterOptionLabels(inputId, option) {
     if (inputId === "hazardFilter") {
+      if (option === "__ALL_HAZARDS__") return { thai: "แสดงทั้งหมด", english: "Show all" };
       const definition = getHazardDefinition(option);
       return definition ? hazardLabels(definition) : { thai: option, english: option };
     }
@@ -9494,7 +9495,7 @@
   }
 
   function getFilterOptions(inputId) {
-    if (inputId === "hazardFilter") return hazardDefinitions.map(definition => definition.name);
+    if (inputId === "hazardFilter") return ["__ALL_HAZARDS__", ...hazardDefinitions.map(definition => definition.name)];
     return [];
   }
 
@@ -9546,7 +9547,7 @@
   function selectFilterOption(inputId, value) {
     const input = document.getElementById(inputId);
     if (!input) return;
-    input.value = value;
+    input.value = value === "__ALL_HAZARDS__" ? "" : value;
     closeFilterMenus();
     renderTable();
   }
