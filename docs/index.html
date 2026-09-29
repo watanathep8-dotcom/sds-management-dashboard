@@ -549,7 +549,10 @@
       border: 1px solid #bfdbfe; box-shadow: 0 24px 70px rgba(2, 6, 23, .3);
     }
     .sds-quick-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 20px; color: #fff; background: linear-gradient(135deg, #1e40af, #2563eb); }
-    .sds-quick-header h3 { font-size: 17px; }
+    .sds-quick-header h3 { flex: 1; font-size: 17px; }
+    .sds-quick-header-actions { display: flex; align-items: center; gap: 7px; }
+    .sds-quick-fullscreen-toggle { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 5px 9px; border: 1px solid rgba(255,255,255,.55); border-radius: 9px; background: rgba(255,255,255,.14); color: #fff; cursor: pointer; font: inherit; font-size: 11px; font-weight: 800; }
+    .sds-quick-fullscreen-toggle small { display: block; margin-left: 4px; font-size: 9px; font-weight: 600; opacity: .9; }
     .sds-quick-body { padding: 20px; }
     .sds-quick-hero { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 13px; background: #eff6ff; }
     .sds-quick-icon { font-size: 32px; }
@@ -579,7 +582,9 @@
     .sds-register-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; color: #334155; font-size: 12px; }
     .sds-register-meta div { border-bottom: 1px solid #94a3b8; padding: 7px 4px; }
     .sds-register-meta small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
-    @media (max-width: 600px) { .sds-quick-grid { grid-template-columns: 1fr; } .sds-register-table th, .sds-register-table td { padding: 6px; font-size: 11px; } .sds-register-table .register-name { font-size: 14px; } .sds-register-meta { grid-template-columns: 1fr; gap: 5px; } }
+    .sds-quick-modal.sds-quick-fullscreen { padding: 0; }
+    .sds-quick-modal.sds-quick-fullscreen .sds-quick-dialog { width: 100vw; max-width: none; height: 100vh; max-height: none; border-radius: 0; }
+    @media (max-width: 600px) { .sds-quick-modal { padding: 8px; } .sds-quick-dialog { width: 100%; max-height: 96vh; border-radius: 13px; } .sds-quick-header { padding: 12px; } .sds-quick-header-actions { gap: 4px; } .sds-quick-fullscreen-toggle { min-height: 30px; padding: 4px 6px; } .sds-quick-fullscreen-toggle small { display: none; } .sds-quick-body { padding: 12px; } .sds-quick-grid { grid-template-columns: 1fr; } .sds-register-table th, .sds-register-table td { padding: 6px 5px; font-size: 10px; } .sds-register-table .register-name { font-size: 13px; } .sds-register-meta { grid-template-columns: 1fr; gap: 5px; } }
 
     @keyframes logoPulse {
       0%, 100% { transform: translateY(0) rotate(-3deg) scale(1); box-shadow: 0 3px 8px rgba(30,64,175,.22); }
@@ -962,7 +967,10 @@
   <div class="sds-quick-dialog">
     <div class="sds-quick-header">
       <h3><span class="bilingual-label">ข้อมูล SDS<small>SDS Information</small></span></h3>
-      <button class="close-btn" type="button" onclick="closeSdsQuickView()">×</button>
+      <div class="sds-quick-header-actions">
+        <button class="sds-quick-fullscreen-toggle" id="sdsQuickFullscreenButton" type="button" onclick="toggleSdsQuickFullScreen()" aria-label="ดูข้อมูลเต็มจอ / View full screen">⛶ <span>เต็มจอ<small>Full screen</small></span></button>
+        <button class="close-btn" type="button" onclick="closeSdsQuickView()">×</button>
+      </div>
     </div>
     <div class="sds-quick-body" id="sdsQuickBody"></div>
   </div>
@@ -8560,6 +8568,7 @@
     const liveItem = sdsData.find(row => String(row.id) === String(item.id));
     const pdfItem = liveItem ? { ...liveItem, ...item } : item;
     const languageOptions = getSdsLanguages(item)
+      .filter(language => language !== "Thai")
       .map(language => ({ language, source: getPdfSourceForLanguage(pdfItem, language) }))
       .filter(option => option.source.url || option.source.fileId);
     const languageButtons = languageOptions.map(option => {
@@ -8577,7 +8586,7 @@
       <table class="sds-register-table" aria-label="ข้อมูลทะเบียนสารเคมี / Chemical register information">
         <tr><th colspan="4" style="text-align:center;">ชื่อสารเคมี<small>Chemical name</small></th></tr>
         <tr><td colspan="4" class="register-name">${chemicalNameMarkup(item)}</td></tr>
-        <tr><th>ลำดับ<small>No.</small></th><td>${escapeHTML(item.sequence || "-")}</td><th>Group<small>กลุ่ม</small></th><td>${escapeHTML(item.group || "-")}</td></tr>
+        <tr><th>Group<small>กลุ่ม</small></th><td colspan="3">${escapeHTML(item.group || "-")}</td></tr>
         <tr><th>สัญลักษณ์ความอันตราย<small>Pictogram</small></th><td colspan="3" class="register-pictograms">${pictograms}</td></tr>
         <tr><th>องค์ประกอบ / ข้อมูลเกี่ยวกับส่วนผสม<small>Composition / ingredients</small></th><td>${escapeHTML(composition)}</td><th>เลข CAS<small>CAS No.</small></th><td>${escapeHTML(item.cas || "-")}</td></tr>
         <tr><th>อัตราส่วน (%)<small>Concentration (%)</small></th><td>${escapeHTML(ratio)}</td><th>ผู้จัดจำหน่าย<small>Supplier</small></th><td>${escapeHTML(item.supplier || "-")}</td></tr>
@@ -8597,14 +8606,30 @@
       <div class="sds-quick-actions">
         <button class="btn-secondary" type="button" onclick="closeSdsQuickView()"><span class="bilingual-label">ปิด<small>Close</small></span></button>
       </div>
-      <div style="margin-top:12px;color:var(--muted);font-size:11px;text-align:center;">${fromQr ? "ข้อมูลสรุปนี้ถูกแนบมากับ QR Code เพื่อให้เปิดดูได้จากมือถือ / This summary is embedded in the QR Code." : "ข้อมูลจากระบบ SDS / Data from SDS system"}</div>`;
+      <div style="margin-top:12px;color:var(--muted);font-size:11px;text-align:center;">${fromQr ? "ข้อมูลนี้เปิดจาก QR Code และโหลดจากรายการ SDS ล่าสุด / Opened from QR Code using the latest SDS record." : "ข้อมูลจากระบบ SDS / Data from SDS system"}</div>`;
     document.getElementById("sdsQuickModal").classList.add("show");
     document.body.style.overflow = "hidden";
   }
 
+  function toggleSdsQuickFullScreen() {
+    const modal = document.getElementById("sdsQuickModal");
+    if (!modal) return;
+    const isFullScreen = modal.classList.toggle("sds-quick-fullscreen");
+    const button = document.getElementById("sdsQuickFullscreenButton");
+    if (button) {
+      button.setAttribute("aria-label", isFullScreen ? "ย่อหน้าต่าง / Exit full screen" : "ดูข้อมูลเต็มจอ / View full screen");
+      button.querySelector("span").firstChild.textContent = isFullScreen ? "ย่อหน้าต่าง" : "เต็มจอ";
+    }
+  }
+
   function closeSdsQuickView() {
     const modal = document.getElementById("sdsQuickModal");
-    if (modal) modal.classList.remove("show");
+    if (modal) modal.classList.remove("show", "sds-quick-fullscreen");
+    const button = document.getElementById("sdsQuickFullscreenButton");
+    if (button) {
+      button.setAttribute("aria-label", "ดูข้อมูลเต็มจอ / View full screen");
+      button.querySelector("span").firstChild.textContent = "เต็มจอ";
+    }
     currentQuickSdsRecord = null;
     document.body.style.overflow = "";
   }
