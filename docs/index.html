@@ -600,6 +600,21 @@
     .sds-quick-modal.sds-quick-fullscreen { padding: 0; }
     .sds-quick-modal.sds-quick-fullscreen .sds-quick-dialog { width: 100vw; max-width: none; height: 100vh; max-height: none; border-radius: 0; }
     @media (max-width: 600px) { .sds-quick-modal { padding: 8px; } .sds-quick-dialog { width: 100%; max-height: 96vh; border-radius: 13px; } .sds-quick-header { padding: 12px; } .sds-quick-header-actions { gap: 4px; } .sds-quick-fullscreen-toggle { min-height: 30px; padding: 4px 6px; } .sds-quick-fullscreen-toggle small { display: none; } .sds-quick-body { padding: 12px; } .sds-quick-grid { grid-template-columns: 1fr; } .sds-register-table { width: auto; max-width: 100%; } .sds-register-table th, .sds-register-table td { padding: 6px 5px; font-size: 10px; } .sds-register-table .register-name { font-size: 13px; } }
+    @media print {
+      @page { size: A4 portrait; margin: 10mm; }
+      body.sds-quick-printing { overflow: visible !important; background: #fff; }
+      body.sds-quick-printing > * { display: none !important; }
+      body.sds-quick-printing > #sdsQuickModal { position: static !important; inset: auto !important; display: block !important; padding: 0 !important; background: #fff !important; }
+      body.sds-quick-printing .sds-quick-dialog { width: 100% !important; max-width: none !important; height: auto !important; max-height: none !important; overflow: visible !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+      body.sds-quick-printing .sds-quick-header,
+      body.sds-quick-printing .sds-quick-actions,
+      body.sds-quick-printing .sds-quick-body > div:last-child { display: none !important; }
+      body.sds-quick-printing .sds-quick-body { padding: 0 !important; }
+      body.sds-quick-printing .sds-register-table { width: 100% !important; max-width: 100% !important; }
+      body.sds-quick-printing .sds-register-table th,
+      body.sds-quick-printing .sds-register-table td { padding: 5px 6px !important; font-size: 10px !important; break-inside: avoid; }
+      body.sds-quick-printing .ppe-item { break-inside: avoid; }
+    }
 
     @keyframes ppeIconFloat {
       0%, 100% { transform: translateY(0) scale(1); }
@@ -1002,6 +1017,7 @@
     <div class="sds-quick-header">
       <h3><span class="bilingual-label">ข้อมูล SDS<small>SDS Information</small></span></h3>
       <div class="sds-quick-header-actions">
+        <button class="sds-quick-fullscreen-toggle" type="button" onclick="printSdsQuickView()" aria-label="พิมพ์ข้อมูล SDS / Print SDS information">🖨 <span>พิมพ์<small>Print</small></span></button>
         <button class="sds-quick-fullscreen-toggle" id="sdsQuickFullscreenButton" type="button" onclick="toggleSdsQuickFullScreen()" aria-label="ดูข้อมูลเต็มจอ / View full screen">⛶ <span>เต็มจอ<small>Full screen</small></span></button>
         <button class="close-btn" type="button" onclick="closeSdsQuickView()">×</button>
       </div>
@@ -9781,6 +9797,15 @@
       button.setAttribute("aria-label", isFullScreen ? "ย่อหน้าต่าง / Exit full screen" : "ดูข้อมูลเต็มจอ / View full screen");
       button.querySelector("span").firstChild.textContent = isFullScreen ? "ย่อหน้าต่าง" : "เต็มจอ";
     }
+  }
+
+  function printSdsQuickView() {
+    if (!currentQuickSdsRecord) return;
+    const cleanup = () => document.body.classList.remove("sds-quick-printing");
+    document.body.classList.add("sds-quick-printing");
+    window.addEventListener("afterprint", cleanup, { once: true });
+    window.print();
+    window.setTimeout(cleanup, 1000);
   }
 
   function closeSdsQuickView() {
