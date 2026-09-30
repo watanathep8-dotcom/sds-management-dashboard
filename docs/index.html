@@ -11774,9 +11774,14 @@
   }
 
   function compositionText(item) {
+    const componentValues = Array.isArray(item?.components)
+      ? item.components.flatMap(component => textValueLines(
+        component?.composition || component?.ingredient || component?.component || component?.name || ""
+      ))
+      : [];
     const values = [
       item?.composition,
-      item?.components,
+      componentValues,
       item?.ingredients,
       item?.ingredient,
       item?.compositionIngredients,
