@@ -602,6 +602,10 @@
     .sds-register-table .register-measures .measure-list { gap: 5px; }
     .sds-register-table .register-measures .measure-item { padding-bottom: 4px; }
     .sds-register-table .register-measures .measure-value { font-size: 11px; }
+    .sds-register-table .register-summary-cell { vertical-align: top; }
+    .sds-register-table .register-summary-label { display: block; font-weight: 800; }
+    .sds-register-table .register-summary-label small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; font-weight: 600; }
+    .sds-register-table .register-summary-value { margin-top: 8px; min-height: 1.35em; white-space: pre-line; line-height: 1.45; font-weight: 500; }
     .sds-register-table .pictogram-set { justify-content: flex-start; }
     .flash-point-alert { color: #dc2626; font-weight: 800; }
     .sds-quick-modal.sds-quick-fullscreen { padding: 0; }
@@ -11189,8 +11193,20 @@
         <tr><td colspan="4" class="register-name">${chemicalNameMarkup(item)}</td></tr>
         <tr><th>Group<small>กลุ่ม</small></th><td colspan="3">${escapeHTML(item.group || "-")}</td></tr>
         <tr><th>สัญลักษณ์ความอันตราย<small>Pictogram</small></th><td colspan="3" class="register-pictograms">${pictograms}</td></tr>
-        <tr><th>องค์ประกอบ / ข้อมูลเกี่ยวกับส่วนผสม<small>Composition / ingredients</small></th><td>${compositionMarkup}</td><th>เลข CAS<small>CAS No.</small></th><td>${bilingualDataMarkup(item.cas || "-")}</td></tr>
-        <tr><th>อัตราส่วน (%)<small>Concentration (%)</small></th><td colspan="3">${ratioMarkup}</td></tr>
+        <tr class="register-summary-row">
+          <td colspan="2" class="register-summary-cell">
+            <span class="register-summary-label">องค์ประกอบ / ข้อมูลเกี่ยวกับส่วนผสม<small>Composition / ingredients</small></span>
+            <div class="register-summary-value">${compositionMarkup}</div>
+          </td>
+          <td class="register-summary-cell">
+            <span class="register-summary-label">เลข CAS<small>CAS No.</small></span>
+            <div class="register-summary-value">${bilingualDataMarkup(item.cas || "-")}</div>
+          </td>
+          <td class="register-summary-cell">
+            <span class="register-summary-label">อัตราส่วน (%)<small>Concentration (%)</small></span>
+            <div class="register-summary-value">${ratioMarkup}</div>
+          </td>
+        </tr>
         <tr><th>จุดวาบไฟ (°C)<small>Flash point (°C)</small></th><td colspan="3">${flashPointMarkup(item)}</td></tr>
         <tr><th>มาตรการปฐมพยาบาล<small>First aid measures</small></th><td colspan="3" class="register-measures">${firstAid}</td></tr>
         <tr><th>มาตรการดับเพลิง<small>Firefighting measures</small></th><td colspan="3" class="register-measures">${firefighting}</td></tr>
