@@ -216,7 +216,7 @@
     .ppe-item { display: inline-flex; align-items: center; gap: 5px; min-height: 48px; overflow: visible; padding: 4px 7px; border: 1px solid #dbe4ef; border-radius: 8px; background: #f8fbff; color: #1e3a8a; font-size: 10px; font-weight: 800; }
     .ppe-item small { color: #64748b; font-size: 9px; font-weight: 600; }
     .ppe-icon-frame { display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 46px; border-radius: 50%; background: #fff; overflow: visible; }
-    .ppe-icon { display: block; width: 40px; height: 40px; object-fit: contain; object-position: center; flex: 0 0 40px; border-radius: 0; background: transparent; overflow: visible; animation: ppeIconFloat 3.2s ease-in-out infinite; }
+    .ppe-icon { display: block; width: 40px; height: 40px; object-fit: contain; object-position: center; flex: 0 0 40px; border-radius: 50%; background: #fff; overflow: hidden; animation: ppeIconFloat 3.2s ease-in-out infinite; }
     .ppe-item > span:last-child { display: flex; flex-direction: column; line-height: 1.2; }
     .ppe-form-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
     .ppe-check-item { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: #f8fbff; cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
@@ -224,7 +224,7 @@
     .ppe-check-item:has(input:checked) { border-color: #2563eb; background: #eff6ff; box-shadow: 0 0 0 2px rgba(37, 99, 235, .10); }
     .ppe-check-item input { flex: 0 0 auto; accent-color: #2563eb; }
     .ppe-form-icon-frame { display: grid; place-items: center; width: 50px; height: 50px; flex: 0 0 50px; border-radius: 50%; background: #fff; overflow: visible; }
-    .ppe-form-icon { display: block; width: 44px; height: 44px; object-fit: contain; object-position: center; flex: 0 0 44px; border-radius: 0; background: transparent; overflow: visible; }
+    .ppe-form-icon { display: block; width: 44px; height: 44px; object-fit: contain; object-position: center; flex: 0 0 44px; border-radius: 50%; background: #fff; overflow: hidden; }
     .ppe-check-text { min-width: 0; color: #1e3a8a; font-size: 11px; font-weight: 800; line-height: 1.2; }
     .ppe-check-text small { display: block; color: #64748b; font-size: 9px; font-weight: 600; margin-top: 2px; }
     @media (max-width: 520px) { .ppe-form-options { grid-template-columns: 1fr; } }
