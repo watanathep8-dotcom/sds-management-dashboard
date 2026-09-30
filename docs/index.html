@@ -599,7 +599,7 @@
     .sds-record-meta span { font-weight: 500; letter-spacing: .04em; }
     .sds-register-title { text-align: center; color: #1e3a8a; font-size: 17px; font-weight: 800; margin-bottom: 12px; }
     .sds-register-title small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 600; }
-    .sds-register-table { width: auto; max-width: 100%; min-width: 0; margin: 0 auto; border-collapse: collapse; table-layout: auto; background: #fff; }
+    .sds-register-table { width: 100%; max-width: 100%; min-width: 0; margin: 0 auto; border-collapse: collapse; table-layout: fixed; background: #fff; }
     .sds-register-table th, .sds-register-table td { border: 1px solid #475569; padding: 6px 8px; vertical-align: top; color: #1e293b; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
     .sds-register-table tr:last-child td { border-bottom: 2px solid #000 !important; }
     .sds-register-table th:nth-child(n), .sds-register-table td:nth-child(n) { width: auto; min-width: 0; }
@@ -628,7 +628,7 @@
     .flash-point-alert { color: #dc2626; font-weight: 800; }
     .sds-quick-modal.sds-quick-fullscreen { padding: 0; }
     .sds-quick-modal.sds-quick-fullscreen .sds-quick-dialog { width: 100vw; max-width: none; height: 100vh; max-height: none; border-radius: 0; }
-    @media (max-width: 600px) { .sds-quick-modal { padding: 8px; } .sds-quick-dialog { width: 100%; max-height: 96vh; border-radius: 13px; } .sds-quick-header { padding: 12px; } .sds-quick-header-actions { gap: 4px; } .sds-quick-fullscreen-toggle { min-height: 30px; padding: 4px 6px; } .sds-quick-fullscreen-toggle small { display: none; } .sds-quick-body { padding: 12px; } .sds-quick-grid { grid-template-columns: 1fr; } .sds-register-table { width: auto; max-width: 100%; } .sds-register-table th, .sds-register-table td { padding: 6px 5px; font-size: 10px; } .sds-register-table .register-name { font-size: 13px; } .pdf-modal { padding: 8px; } .pdf-dialog { width: 100%; height: calc(100vh - 16px); max-height: none; border-radius: 12px; } .pdf-dialog-header { flex-wrap: wrap; align-items: flex-start; gap: 8px; padding: 11px 12px; } .pdf-dialog-title { flex: 1 1 100%; width: 100%; } .pdf-dialog-title h3 { font-size: 15px; } .pdf-dialog-actions { width: 100%; justify-content: flex-end; gap: 5px; } .pdf-dialog-actions .btn-secondary { padding: 6px 8px; font-size: 11px; } .pdf-pages { padding: 10px 6px 20px; gap: 10px; } }
+    @media (max-width: 600px) { .sds-quick-modal { padding: 8px; } .sds-quick-dialog { width: 100%; max-height: 96vh; border-radius: 13px; } .sds-quick-header { padding: 12px; } .sds-quick-header-actions { gap: 4px; } .sds-quick-fullscreen-toggle { min-height: 30px; padding: 4px 6px; } .sds-quick-fullscreen-toggle small { display: none; } .sds-quick-body { padding: 12px; } .sds-quick-grid { grid-template-columns: 1fr; } .sds-register-table { width: 100%; max-width: 100%; } .sds-register-table th, .sds-register-table td { padding: 6px 5px; font-size: 10px; } .sds-register-table .register-name { font-size: 13px; } .pdf-modal { padding: 8px; } .pdf-dialog { width: 100%; height: calc(100vh - 16px); max-height: none; border-radius: 12px; } .pdf-dialog-header { flex-wrap: wrap; align-items: flex-start; gap: 8px; padding: 11px 12px; } .pdf-dialog-title { flex: 1 1 100%; width: 100%; } .pdf-dialog-title h3 { font-size: 15px; } .pdf-dialog-actions { width: 100%; justify-content: flex-end; gap: 5px; } .pdf-dialog-actions .btn-secondary { padding: 6px 8px; font-size: 11px; } .pdf-pages { padding: 10px 6px 20px; gap: 10px; } }
     @media print {
       @page { size: A6 portrait; margin: 4mm; }
       body.sds-quick-printing { overflow: visible !important; background: #fff; }
@@ -11291,7 +11291,8 @@
     const body = document.getElementById("sdsQuickBody");
     body.innerHTML = `
       <div class="sds-register-title">ทะเบียนสารเคมี<small>Chemical Register</small></div>
-      <table class="sds-register-table" aria-label="ข้อมูลทะเบียนสารเคมี / Chemical register information">
+       <table class="sds-register-table" aria-label="ข้อมูลทะเบียนสารเคมี / Chemical register information">
+         <colgroup><col style="width:34%;"><col style="width:16%;"><col style="width:25%;"><col style="width:25%;"></colgroup>
         <tr><td colspan="4" class="register-name"><div class="register-name-content"><span class="register-name-prefix">ชื่อสารเคมี<small>Chemical name</small></span>${chemicalNameMarkup(item)}</div></td></tr>
         <tr><th>กลุ่ม<small>Group</small></th><td colspan="3">${escapeHTML(item.group || "-")}</td></tr>
         <tr><th>สัญลักษณ์ความอันตราย<small>Pictogram</small></th><td colspan="3" class="register-pictograms">${pictograms}</td></tr>
