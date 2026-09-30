@@ -798,6 +798,7 @@
     .settings-add .settings-name-input { margin-bottom: 3px; }
     .settings-footer { justify-content: flex-end; border-top: 1px solid var(--border); border-bottom: 0; background: #fff; }
     .column-width-dialog { width: min(1120px, 100%); }
+    .column-width-settings-trigger { display: none !important; }
     .column-width-help { margin-bottom: 14px; color: var(--muted); font-size: 13px; line-height: 1.55; }
     .column-width-viewport { overflow-x: auto; padding: 4px 2px 12px; border: 1px solid #dbe4ef; border-radius: 12px; background: #f8fbff; }
     .column-width-strip { display: flex; align-items: stretch; min-width: max-content; min-height: 118px; padding: 12px; }
@@ -912,7 +913,7 @@
       </div>
 
       <div class="table-toolbar-actions">
-        <button class="settings-btn" type="button" onclick="openColumnWidthSettings()"><span class="bilingual-label">↔ ตั้งค่าความกว้าง<small>Column widths</small></span></button>
+        <button id="columnWidthSettingsButton" class="settings-btn column-width-settings-trigger" type="button" onclick="openColumnWidthSettings()"><span class="bilingual-label">↔ ตั้งค่าความกว้าง<small>Column widths</small></span></button>
         <button class="btn-secondary export-btn" onclick="exportCSV()"><span class="bilingual-label">↓ ส่งออก CSV<small>Export CSV</small></span></button>
       </div>
     </div>
