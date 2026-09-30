@@ -11293,12 +11293,12 @@
     body.innerHTML = `
       <div class="sds-register-title">ทะเบียนสารเคมี<small>Chemical Register</small></div>
        <table class="sds-register-table" aria-label="ข้อมูลทะเบียนสารเคมี / Chemical register information">
-         <colgroup><col style="width:34%;"><col style="width:16%;"><col style="width:25%;"><col style="width:25%;"></colgroup>
-        <tr><th>ชื่อสารเคมี<small>Chemical name</small></th><td colspan="3" class="register-name"><div class="register-name-content">${chemicalNameMarkup(item)}</div></td></tr>
-        <tr><th>กลุ่ม<small>Group</small></th><td colspan="3">${escapeHTML(item.group || "-")}</td></tr>
-        <tr><th>สัญลักษณ์ความอันตราย<small>Pictogram</small></th><td colspan="3" class="register-pictograms">${pictograms}</td></tr>
+         <colgroup><col style="width:34%;"><col style="width:33%;"><col style="width:33%;"></colgroup>
+        <tr><th>ชื่อสารเคมี<small>Chemical name</small></th><td colspan="2" class="register-name"><div class="register-name-content">${chemicalNameMarkup(item)}</div></td></tr>
+        <tr><th>กลุ่ม<small>Group</small></th><td colspan="2">${escapeHTML(item.group || "-")}</td></tr>
+        <tr><th>สัญลักษณ์ความอันตราย<small>Pictogram</small></th><td colspan="2" class="register-pictograms">${pictograms}</td></tr>
         <tr class="register-summary-row">
-          <td colspan="2" class="register-summary-cell">
+          <td class="register-summary-cell">
             <span class="register-summary-label">องค์ประกอบ<small>Composition</small></span>
             <div class="register-summary-value">${compositionMarkup}</div>
           </td>
@@ -11311,10 +11311,10 @@
             <div class="register-summary-value">${ratioMarkup}</div>
           </td>
         </tr>
-        <tr><th>จุดวาบไฟ (°C)<small>Flash point (°C)</small></th><td colspan="3">${flashPointMarkup(item)}</td></tr>
-        <tr><th>มาตรการปฐมพยาบาล<small>First aid measures</small></th><td colspan="3" class="register-measures">${firstAid}</td></tr>
-        <tr><th>มาตรการดับเพลิง<small>Firefighting measures</small></th><td colspan="3" class="register-measures">${firefighting}</td></tr>
-        <tr><th>อุปกรณ์ป้องกันส่วนบุคคล<small>Personal protective equipment</small></th><td colspan="3" class="register-ppe">${personalProtectiveEquipment}</td></tr>
+        <tr><th>จุดวาบไฟ (°C)<small>Flash point (°C)</small></th><td colspan="2">${flashPointMarkup(item)}</td></tr>
+        <tr><th>มาตรการปฐมพยาบาล<small>First aid measures</small></th><td colspan="2" class="register-measures">${firstAid}</td></tr>
+        <tr><th>มาตรการดับเพลิง<small>Firefighting measures</small></th><td colspan="2" class="register-measures">${firefighting}</td></tr>
+        <tr><th>อุปกรณ์ป้องกันส่วนบุคคล<small>Personal protective equipment</small></th><td colspan="2" class="register-ppe">${personalProtectiveEquipment}</td></tr>
       </table>
       <div class="sds-record-meta" aria-label="ข้อมูลผู้บันทึกและวันที่">
         <div>ผู้บันทึก</div>
