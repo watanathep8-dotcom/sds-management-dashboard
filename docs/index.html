@@ -517,17 +517,24 @@
       display: flex; align-items: center; justify-content: space-between;
       gap: 16px; border-bottom: 1px solid var(--border);
     }
-    .pdf-dialog-title { min-width: 0; }
+    .pdf-dialog-title { flex: 1 1 auto; min-width: 0; overflow: hidden; }
     .pdf-dialog-title h3 {
-      font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: 16px; line-height: 1.25; white-space: normal; overflow: visible; text-overflow: clip;
     }
+    .pdf-dialog-title .chemical-name-heading { display: flex; align-items: flex-start; width: 100%; max-width: 100%; gap: 8px; }
+    .pdf-dialog-title .chemical-name-heading .chemical-name-stack { flex: 1 1 auto; width: auto; min-width: 0; max-width: none; }
+    .pdf-dialog-title .chemical-name-heading .chemical-name { white-space: normal; overflow-wrap: anywhere; word-break: normal; }
     .pdf-dialog-title p {
       margin-top: 3px; color: var(--muted); font-size: 12px;
     }
     .pdf-dialog-actions { display: flex; gap: 8px; align-items: center; }
-    .pdf-viewer {
-      width: 100%; flex: 1; border: 0; background: #e5e7eb;
-    }
+    .pdf-viewer-shell { width: 100%; flex: 1 1 auto; min-height: 0; overflow: auto; background: #e5e7eb; }
+    .pdf-viewer { width: 100%; height: 100%; min-height: 100%; border: 0; background: #e5e7eb; }
+    .pdf-pages { display: none; flex-direction: column; align-items: center; gap: 12px; min-height: 100%; padding: 14px 10px 26px; background: #e5e7eb; }
+    .pdf-page-card { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; }
+    .pdf-page-card canvas { display: block; max-width: 100%; height: auto; background: #fff; box-shadow: 0 4px 16px rgba(15, 23, 42, .18); }
+    .pdf-page-number { color: #64748b; font-size: 10px; font-weight: 700; }
+    .pdf-pages-loading { display: grid; place-items: center; min-height: 180px; padding: 24px; color: #475569; text-align: center; font-size: 13px; }
    .pdf-empty {
      flex: 1; display: none; place-items: center; text-align: center;
      padding: 30px; color: var(--muted); background: #f8fafc;
@@ -610,7 +617,7 @@
     .flash-point-alert { color: #dc2626; font-weight: 800; }
     .sds-quick-modal.sds-quick-fullscreen { padding: 0; }
     .sds-quick-modal.sds-quick-fullscreen .sds-quick-dialog { width: 100vw; max-width: none; height: 100vh; max-height: none; border-radius: 0; }
-    @media (max-width: 600px) { .sds-quick-modal { padding: 8px; } .sds-quick-dialog { width: 100%; max-height: 96vh; border-radius: 13px; } .sds-quick-header { padding: 12px; } .sds-quick-header-actions { gap: 4px; } .sds-quick-fullscreen-toggle { min-height: 30px; padding: 4px 6px; } .sds-quick-fullscreen-toggle small { display: none; } .sds-quick-body { padding: 12px; } .sds-quick-grid { grid-template-columns: 1fr; } .sds-register-table { width: auto; max-width: 100%; } .sds-register-table th, .sds-register-table td { padding: 6px 5px; font-size: 10px; } .sds-register-table .register-name { font-size: 13px; } }
+    @media (max-width: 600px) { .sds-quick-modal { padding: 8px; } .sds-quick-dialog { width: 100%; max-height: 96vh; border-radius: 13px; } .sds-quick-header { padding: 12px; } .sds-quick-header-actions { gap: 4px; } .sds-quick-fullscreen-toggle { min-height: 30px; padding: 4px 6px; } .sds-quick-fullscreen-toggle small { display: none; } .sds-quick-body { padding: 12px; } .sds-quick-grid { grid-template-columns: 1fr; } .sds-register-table { width: auto; max-width: 100%; } .sds-register-table th, .sds-register-table td { padding: 6px 5px; font-size: 10px; } .sds-register-table .register-name { font-size: 13px; } .pdf-modal { padding: 8px; } .pdf-dialog { width: 100%; height: calc(100vh - 16px); max-height: none; border-radius: 12px; } .pdf-dialog-header { flex-wrap: wrap; align-items: flex-start; gap: 8px; padding: 11px 12px; } .pdf-dialog-title { flex: 1 1 100%; width: 100%; } .pdf-dialog-title h3 { font-size: 15px; } .pdf-dialog-actions { width: 100%; justify-content: flex-end; gap: 5px; } .pdf-dialog-actions .btn-secondary { padding: 6px 8px; font-size: 11px; } .pdf-pages { padding: 10px 6px 20px; gap: 10px; } }
     @media print {
       @page { size: A6 portrait; margin: 4mm; }
       body.sds-quick-printing { overflow: visible !important; background: #fff; }
@@ -999,7 +1006,10 @@
         <button class="close-btn" type="button" onclick="closePdfViewer()">×</button>
       </div>
     </div>
-    <iframe class="pdf-viewer" id="pdfViewer" title="ตัวแสดงเอกสาร SDS PDF / SDS PDF Viewer"></iframe>
+    <div class="pdf-viewer-shell" id="pdfViewerShell">
+      <iframe class="pdf-viewer" id="pdfViewer" title="ตัวแสดงเอกสาร SDS PDF / SDS PDF Viewer"></iframe>
+      <div class="pdf-pages" id="pdfPages" aria-label="ทุกหน้าของเอกสาร SDS / All SDS pages"></div>
+    </div>
     <div class="pdf-empty" id="pdfEmpty">
       <div>
         <div style="font-size:42px; margin-bottom:10px;">📄</div>
@@ -10850,6 +10860,93 @@
     });
   }
 
+  let pdfRenderToken = 0;
+  let pdfJsPromise = null;
+
+  function clearPdfPages() {
+    const pages = document.getElementById("pdfPages");
+    if (!pages) return;
+    pages.innerHTML = "";
+    pages.style.display = "none";
+  }
+
+  function loadPdfJs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (pdfJsPromise) return pdfJsPromise;
+    pdfJsPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+      script.onload = () => {
+        if (!window.pdfjsLib) {
+          reject(new Error("PDF viewer library is unavailable"));
+          return;
+        }
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        resolve(window.pdfjsLib);
+      };
+      script.onerror = () => reject(new Error("Unable to load the full PDF viewer"));
+      document.head.appendChild(script);
+    });
+    return pdfJsPromise;
+  }
+
+  async function renderPdfDocument(sourceUrl) {
+    const viewer = document.getElementById("pdfViewer");
+    const shell = document.getElementById("pdfViewerShell");
+    const pages = document.getElementById("pdfPages");
+    if (!viewer || !shell || !pages || !sourceUrl) return;
+
+    const renderToken = ++pdfRenderToken;
+    viewer.removeAttribute("src");
+    viewer.style.display = "none";
+    pages.style.display = "flex";
+    pages.innerHTML = `<div class="pdf-pages-loading"><div>กำลังเตรียมเอกสาร SDS ให้แสดงครบทุกหน้า<br><small>Preparing all SDS pages for viewing</small></div></div>`;
+
+    try {
+      const pdfjs = await loadPdfJs();
+      if (renderToken !== pdfRenderToken) return;
+      const pdf = await pdfjs.getDocument({ url: sourceUrl, withCredentials: false }).promise;
+      if (renderToken !== pdfRenderToken) return;
+
+      pages.innerHTML = "";
+      const pageWidth = Math.max(240, Math.min(shell.clientWidth - 24, 1024));
+      const deviceScale = Math.min(window.devicePixelRatio || 1, 2);
+
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        if (renderToken !== pdfRenderToken) return;
+        const page = await pdf.getPage(pageNumber);
+        const baseViewport = page.getViewport({ scale: 1 });
+        const scale = pageWidth / baseViewport.width;
+        const viewport = page.getViewport({ scale });
+        const card = document.createElement("div");
+        card.className = "pdf-page-card";
+        const canvas = document.createElement("canvas");
+        canvas.setAttribute("aria-label", `SDS page ${pageNumber} of ${pdf.numPages}`);
+        canvas.width = Math.ceil(viewport.width * deviceScale);
+        canvas.height = Math.ceil(viewport.height * deviceScale);
+        canvas.style.width = `${Math.ceil(viewport.width)}px`;
+        canvas.style.height = `${Math.ceil(viewport.height)}px`;
+        card.appendChild(canvas);
+        const label = document.createElement("div");
+        label.className = "pdf-page-number";
+        label.textContent = `หน้า ${pageNumber} / ${pdf.numPages} • Page ${pageNumber} of ${pdf.numPages}`;
+        card.appendChild(label);
+        pages.appendChild(card);
+        await page.render({
+          canvasContext: canvas.getContext("2d", { alpha: false }),
+          viewport,
+          transform: deviceScale === 1 ? null : [deviceScale, 0, 0, deviceScale, 0, 0]
+        }).promise;
+      }
+    } catch (error) {
+      if (renderToken !== pdfRenderToken) return;
+      console.warn("Full PDF rendering unavailable; falling back to browser PDF viewer.", error);
+      pages.style.display = "none";
+      viewer.src = sourceUrl;
+      viewer.style.display = "block";
+    }
+  }
+
   async function viewSDS(id) {
     const item = sdsData.find(row => String(row.id) === String(id));
     if (!item) return;
@@ -10858,12 +10955,12 @@
     if (/^https?:\/\/[^\s]+\.pdf(?:[?#]|$)/i.test(publicPdfUrl)) {
       document.getElementById("pdfTitle").innerHTML = chemicalNameHeadingMarkup(item);
       document.getElementById("pdfSubtitle").textContent = `${item.cas || "-"} • ${item.supplier || "ไม่ระบุ Supplier"}`;
-      const viewer = document.getElementById("pdfViewer");
       const empty = document.getElementById("pdfEmpty");
       const openNew = document.getElementById("pdfOpenNew");
       const download = document.getElementById("pdfDownload");
-      viewer.src = publicPdfUrl;
-      viewer.style.display = "block";
+      document.getElementById("pdfModal").classList.add("show");
+      document.body.style.overflow = "hidden";
+      renderPdfDocument(publicPdfUrl);
       empty.style.display = "none";
       openNew.href = publicPdfUrl;
       openNew.style.display = "inline-block";
@@ -10879,7 +10976,6 @@
     document.getElementById("pdfSubtitle").textContent =
       `${item.cas || "-"} • ${item.supplier || "ไม่ระบุ Supplier"}`;
 
-    const viewer = document.getElementById("pdfViewer");
     const empty = document.getElementById("pdfEmpty");
     const openNew = document.getElementById("pdfOpenNew");
     const download = document.getElementById("pdfDownload");
@@ -10894,8 +10990,9 @@
 
       if (pdf && pdf.blob) {
         currentPdfUrl = URL.createObjectURL(pdf.blob);
-        viewer.src = currentPdfUrl;
-        viewer.style.display = "block";
+        document.getElementById("pdfModal").classList.add("show");
+        document.body.style.overflow = "hidden";
+        renderPdfDocument(currentPdfUrl);
         empty.style.display = "none";
         openNew.href = currentPdfUrl;
         openNew.style.display = "inline-block";
@@ -10903,6 +11000,7 @@
         download.download = pdf.name || `${item.chemical}-SDS.pdf`;
         download.style.display = "inline-block";
       } else {
+        const viewer = document.getElementById("pdfViewer");
         viewer.removeAttribute("src");
         viewer.style.display = "none";
         empty.style.display = "grid";
@@ -10920,7 +11018,9 @@
 
   function closePdfViewer() {
     document.getElementById("pdfModal").classList.remove("show");
+    pdfRenderToken += 1;
     document.getElementById("pdfViewer").removeAttribute("src");
+    clearPdfPages();
     document.body.style.overflow = "";
 
     if (currentPdfUrl) {
@@ -11134,12 +11234,12 @@
   function openPdfUrlInViewer(item, source) {
     document.getElementById("pdfTitle").innerHTML = chemicalNameHeadingMarkup(item);
     document.getElementById("pdfSubtitle").textContent = `${item.cas || "-"} • ${source.name || "PDF"}`;
-    const viewer = document.getElementById("pdfViewer");
     const empty = document.getElementById("pdfEmpty");
     const openNew = document.getElementById("pdfOpenNew");
     const download = document.getElementById("pdfDownload");
-    viewer.src = source.url;
-    viewer.style.display = "block";
+    document.getElementById("pdfModal").classList.add("show");
+    document.body.style.overflow = "hidden";
+    renderPdfDocument(source.url);
     empty.style.display = "none";
     openNew.href = source.url;
     openNew.style.display = "inline-block";
@@ -12403,13 +12503,11 @@
     }
 
     function showDirectPdf(item) {
-      var viewer = document.getElementById("pdfViewer");
       var empty = document.getElementById("pdfEmpty");
       var openNew = document.getElementById("pdfOpenNew");
       var download = document.getElementById("pdfDownload");
       resetPdfEmpty();
-      viewer.src = item.pdfUrl;
-      viewer.style.display = "block";
+      renderPdfDocument(item.pdfUrl);
       empty.style.display = "none";
       openNew.href = item.pdfUrl;
       openNew.innerHTML = bilingualHTML("เปิดแท็บใหม่", "Open in new tab");
@@ -12456,6 +12554,8 @@
       var openNew = document.getElementById("pdfOpenNew");
       var download = document.getElementById("pdfDownload");
       resetPdfEmpty();
+      pdfRenderToken += 1;
+      clearPdfPages();
       viewer.removeAttribute("src");
       viewer.style.display = "none";
       openNew.style.display = "none";
@@ -12475,6 +12575,8 @@
       var openNew = document.getElementById("pdfOpenNew");
       var download = document.getElementById("pdfDownload");
       var message = error && error.message ? error.message : "ไม่สามารถโหลดไฟล์ SDS ได้";
+      pdfRenderToken += 1;
+      clearPdfPages();
       viewer.removeAttribute("src");
       viewer.style.display = "none";
       openNew.style.display = "none";
@@ -12498,15 +12600,13 @@
       var bytes = new Uint8Array(binary.length);
       for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       var blob = new Blob([bytes], { type: fileData.mimeType || "application/pdf" });
-      var viewer = document.getElementById("pdfViewer");
       var empty = document.getElementById("pdfEmpty");
       var openNew = document.getElementById("pdfOpenNew");
       var download = document.getElementById("pdfDownload");
 
       if (currentPdfUrl) URL.revokeObjectURL(currentPdfUrl);
       currentPdfUrl = URL.createObjectURL(blob);
-      viewer.src = currentPdfUrl;
-      viewer.style.display = "block";
+      renderPdfDocument(currentPdfUrl);
       empty.style.display = "none";
       openNew.href = currentPdfUrl;
       openNew.innerHTML = bilingualHTML("เปิดแท็บใหม่", "Open in new tab");
