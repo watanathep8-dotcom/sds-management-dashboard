@@ -602,8 +602,10 @@
     .sds-register-table th:nth-child(n), .sds-register-table td:nth-child(n) { width: auto; min-width: 0; }
     .sds-register-table th { width: auto; background: #f8fafc; text-align: left; font-weight: 800; }
     .sds-register-table th small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; font-weight: 600; }
-    .sds-register-table .register-name { text-align: center; font-weight: 800; color: #1e3a8a; font-size: 15px; }
-    .sds-register-table .register-name .chemical-name-stack { align-items: center; }
+    .sds-register-table .register-name { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 7px; text-align: center; font-weight: 800; color: #1e3a8a; font-size: 15px; }
+    .sds-register-table .register-name-prefix { display: inline-flex; flex-direction: column; gap: 2px; }
+    .sds-register-table .register-name-prefix small { color: var(--muted); font-size: 10px; font-weight: 600; }
+    .sds-register-table .register-name .chemical-name-stack { align-items: flex-start; width: auto; max-width: 100%; flex: 0 1 auto; text-align: left; }
     .sds-register-table .register-pictograms { min-height: 48px; }
     .sds-register-table .register-pictograms .pictogram-set { gap: 7px; }
     .sds-register-table .register-ppe .ppe-list { gap: 6px 8px; }
@@ -11294,8 +11296,7 @@
     body.innerHTML = `
       <div class="sds-register-title">ทะเบียนสารเคมี<small>Chemical Register</small></div>
       <table class="sds-register-table" aria-label="ข้อมูลทะเบียนสารเคมี / Chemical register information">
-        <tr><th colspan="4" style="text-align:center;">ชื่อสารเคมี<small>Chemical name</small></th></tr>
-        <tr><td colspan="4" class="register-name">${chemicalNameMarkup(item)}</td></tr>
+        <tr><td colspan="4" class="register-name"><span class="register-name-prefix">ชื่อสารเคมี<small>Chemical name</small></span>${chemicalNameMarkup(item)}</td></tr>
         <tr><th>Group<small>กลุ่ม</small></th><td colspan="3">${escapeHTML(item.group || "-")}</td></tr>
         <tr><th>สัญลักษณ์ความอันตราย<small>Pictogram</small></th><td colspan="3" class="register-pictograms">${pictograms}</td></tr>
         <tr class="register-summary-row">
