@@ -203,7 +203,7 @@
     .chemical-pictograms { display: inline-flex; flex-wrap: wrap; gap: 3px; flex: 0 0 auto; max-width: 76px; }
     .chemical-pictograms .pictogram-image { width: 22px; height: 22px; animation-duration: 3.8s; }
     .pictogram-set { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
-    .pictogram-set .pictogram-image { width: 38px; height: 38px; }
+    .pictogram-set .pictogram-image { width: 46px; height: 46px; }
     .measure-list { display: grid; gap: 6px; line-height: 1.35; }
     .measure-item { display: block; padding-bottom: 5px; border-bottom: 1px dashed #dbe4ef; }
     .measure-item:last-child { padding-bottom: 0; border-bottom: 0; }
@@ -593,15 +593,22 @@
     .sds-register-table .register-name { text-align: center; font-weight: 800; color: #1e3a8a; font-size: 15px; }
     .sds-register-table .register-name .chemical-name-stack { align-items: center; }
     .sds-register-table .register-pictograms { min-height: 48px; }
+    .sds-register-table .register-pictograms .pictogram-set { gap: 7px; }
+    .sds-register-table .register-ppe .ppe-list { gap: 6px 8px; }
+    .sds-register-table .register-ppe .ppe-item { min-height: 40px; gap: 5px; padding: 3px 5px; font-size: 8px; }
+    .sds-register-table .register-ppe .ppe-item small { font-size: 7px; }
+    .sds-register-table .register-ppe .ppe-icon-frame { width: 34px; height: 34px; flex-basis: 34px; }
+    .sds-register-table .register-ppe .ppe-icon { width: 30px; height: 30px; flex-basis: 30px; }
     .sds-register-table .register-measures .measure-list { gap: 5px; }
     .sds-register-table .register-measures .measure-item { padding-bottom: 4px; }
     .sds-register-table .register-measures .measure-value { font-size: 11px; }
     .sds-register-table .pictogram-set { justify-content: flex-start; }
+    .flash-point-alert { color: #dc2626; font-weight: 800; }
     .sds-quick-modal.sds-quick-fullscreen { padding: 0; }
     .sds-quick-modal.sds-quick-fullscreen .sds-quick-dialog { width: 100vw; max-width: none; height: 100vh; max-height: none; border-radius: 0; }
     @media (max-width: 600px) { .sds-quick-modal { padding: 8px; } .sds-quick-dialog { width: 100%; max-height: 96vh; border-radius: 13px; } .sds-quick-header { padding: 12px; } .sds-quick-header-actions { gap: 4px; } .sds-quick-fullscreen-toggle { min-height: 30px; padding: 4px 6px; } .sds-quick-fullscreen-toggle small { display: none; } .sds-quick-body { padding: 12px; } .sds-quick-grid { grid-template-columns: 1fr; } .sds-register-table { width: auto; max-width: 100%; } .sds-register-table th, .sds-register-table td { padding: 6px 5px; font-size: 10px; } .sds-register-table .register-name { font-size: 13px; } }
     @media print {
-      @page { size: A4 portrait; margin: 10mm; }
+      @page { size: A6 portrait; margin: 4mm; }
       body.sds-quick-printing { overflow: visible !important; background: #fff; }
       body.sds-quick-printing > * { display: none !important; }
       body.sds-quick-printing > #sdsQuickModal { position: static !important; inset: auto !important; display: block !important; padding: 0 !important; background: #fff !important; }
@@ -612,7 +619,13 @@
       body.sds-quick-printing .sds-quick-body { padding: 0 !important; }
       body.sds-quick-printing .sds-register-table { width: 100% !important; max-width: 100% !important; }
       body.sds-quick-printing .sds-register-table th,
-      body.sds-quick-printing .sds-register-table td { padding: 5px 6px !important; font-size: 10px !important; break-inside: avoid; }
+      body.sds-quick-printing .sds-register-table td { padding: 3px 4px !important; font-size: 7.5px !important; break-inside: avoid; }
+      body.sds-quick-printing .sds-register-table th small { font-size: 6.5px !important; }
+      body.sds-quick-printing .sds-register-table .register-pictograms .pictogram-set .pictogram-image { width: 42px !important; height: 42px !important; }
+      body.sds-quick-printing .sds-register-table .register-ppe .ppe-item { min-height: 32px !important; gap: 3px !important; padding: 2px 3px !important; font-size: 6.5px !important; }
+      body.sds-quick-printing .sds-register-table .register-ppe .ppe-item small { font-size: 5.5px !important; }
+      body.sds-quick-printing .sds-register-table .register-ppe .ppe-icon-frame { width: 27px !important; height: 27px !important; flex-basis: 27px !important; }
+      body.sds-quick-printing .sds-register-table .register-ppe .ppe-icon { width: 24px !important; height: 24px !important; flex-basis: 24px !important; }
       body.sds-quick-printing .ppe-item { break-inside: avoid; }
     }
 
@@ -9755,8 +9768,10 @@
       const labels = LANGUAGE_LABELS[option.language] || { thai: option.language, english: option.language };
       return `<button class="btn-primary sds-language-option" type="button" onclick="openQuickSdsLanguage('${option.language}')"><span class="bilingual-label">📄 เปิด SDS ${escapeHTML(labels.thai)}<small>Open ${escapeHTML(labels.english)} SDS</small></span></button>`;
     }).join("");
-    const composition = item.composition || item.components || item.ingredient || "-";
+    const composition = compositionText(item);
     const ratio = item.ratio || item.concentration || item.percentage || "-";
+    const compositionMarkup = bilingualDataMarkup(composition);
+    const ratioMarkup = bilingualDataMarkup(ratio);
     const pictograms = pictogramCellMarkup(item);
     const firstAid = measureListMarkup(item.firstAidMeasures, "firstAid");
     const firefighting = measureListMarkup(item.firefightingMeasures, "firefighting");
@@ -9769,9 +9784,9 @@
         <tr><td colspan="4" class="register-name">${chemicalNameMarkup(item)}</td></tr>
         <tr><th>Group<small>กลุ่ม</small></th><td colspan="3">${escapeHTML(item.group || "-")}</td></tr>
         <tr><th>สัญลักษณ์ความอันตราย<small>Pictogram</small></th><td colspan="3" class="register-pictograms">${pictograms}</td></tr>
-        <tr><th>องค์ประกอบ / ข้อมูลเกี่ยวกับส่วนผสม<small>Composition / ingredients</small></th><td>${escapeHTML(composition)}</td><th>เลข CAS<small>CAS No.</small></th><td>${escapeHTML(item.cas || "-")}</td></tr>
-        <tr><th>อัตราส่วน (%)<small>Concentration (%)</small></th><td>${escapeHTML(ratio)}</td><th>ผู้จัดจำหน่าย<small>Supplier</small></th><td>${escapeHTML(item.supplier || "-")}</td></tr>
-        <tr><th>จุดวาบไฟ (°C)<small>Flash point (°C)</small></th><td colspan="3">${bilingualDataMarkup(formatFlashPointValue(item.flashPoint))}</td></tr>
+        <tr><th>องค์ประกอบ / ข้อมูลเกี่ยวกับส่วนผสม<small>Composition / ingredients</small></th><td>${compositionMarkup}</td><th>เลข CAS<small>CAS No.</small></th><td>${escapeHTML(item.cas || "-")}</td></tr>
+        <tr><th>อัตราส่วน (%)<small>Concentration (%)</small></th><td colspan="3">${ratioMarkup}</td></tr>
+        <tr><th>จุดวาบไฟ (°C)<small>Flash point (°C)</small></th><td colspan="3">${flashPointMarkup(item)}</td></tr>
         <tr><th>มาตรการปฐมพยาบาล<small>First aid measures</small></th><td colspan="3" class="register-measures">${firstAid}</td></tr>
         <tr><th>มาตรการดับเพลิง<small>Firefighting measures</small></th><td colspan="3" class="register-measures">${firefighting}</td></tr>
         <tr><th>อุปกรณ์ป้องกันส่วนบุคคล<small>Personal protective equipment</small></th><td colspan="3" class="register-ppe">${personalProtectiveEquipment}</td></tr>
@@ -10341,6 +10356,50 @@
     return text.replace(/(^|[<>~=≈]\s*)(\d+(?:\.\d+)?)/, "$1$2°C");
   }
 
+  function textValueLines(value) {
+    if (Array.isArray(value)) {
+      return value.flatMap(entry => textValueLines(entry));
+    }
+    if (value && typeof value === "object") {
+      const preferred = value.name || value.chemical || value.ingredient || value.component || value.value || value.detail;
+      return preferred ? textValueLines(preferred) : Object.values(value).flatMap(entry => textValueLines(entry));
+    }
+    const text = String(value || "").trim();
+    return text ? text.split(/\r?\n/).map(line => line.trim()).filter(Boolean) : [];
+  }
+
+  function compositionText(item) {
+    const values = [
+      item?.composition,
+      item?.components,
+      item?.ingredients,
+      item?.ingredient,
+      item?.compositionIngredients,
+      item?.compositionData
+    ].flatMap(value => textValueLines(value));
+    return [...new Set(values)].join("\n") || "-";
+  }
+
+  function isLowFlammableFlashPoint(item, value) {
+    const hazards = Array.isArray(item?.hazards) ? item.hazards : [item?.hazard];
+    const flammable = hazards.some(name => {
+      const definition = getHazardDefinition(name);
+      return definition?.id === "flammable" || /flammable|ไวไฟ/i.test(String(name || ""));
+    });
+    if (!flammable) return false;
+    const text = String(value || "").trim();
+    const numberIndex = text.search(/\d/);
+    if (numberIndex < 0 || />\s*$/.test(text.slice(0, numberIndex))) return false;
+    const temperature = Number((text.slice(numberIndex).match(/^\d+(?:\.\d+)?/) || [""])[0]);
+    return Number.isFinite(temperature) && temperature < 60;
+  }
+
+  function flashPointMarkup(item) {
+    const value = formatFlashPointValue(item?.flashPoint);
+    const className = isLowFlammableFlashPoint(item, item?.flashPoint) ? "flash-point-alert" : "";
+    return `<span class="flash-point-value ${className}">${bilingualDataMarkup(value)}</span>`;
+  }
+
   function measureIconMarkup(item, kind) {
     const text = `${item?.thai || ""} ${item?.english || ""} ${item?.value || ""} ${item?.detail || ""}`.toLowerCase();
     const icon = kind === "firstAid"
@@ -10665,7 +10724,7 @@
           </td>
           <td>${pictogramCellMarkup(item)}</td>
           <td>${escapeHTML(item.cas)}</td>
-          <td class="detail-cell">${bilingualDataMarkup(formatFlashPointValue(item.flashPoint))}</td>
+          <td class="detail-cell">${flashPointMarkup(item)}</td>
           <td class="detail-cell">${measureListMarkup(item.firstAidMeasures, "firstAid")}</td>
           <td class="detail-cell">${measureListMarkup(item.firefightingMeasures, "firefighting")}</td>
           <td class="thai-sds-column">${languageSdsCell(item, "Thai")}</td>
