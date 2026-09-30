@@ -213,16 +213,18 @@
     .measure-label small { color: #64748b; font-size: 9px; font-weight: 600; }
     .measure-value { display: block; margin-top: 2px; color: #334155; }
     .ppe-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; }
-    .ppe-item { display: inline-flex; align-items: center; gap: 5px; min-height: 44px; overflow: visible; padding: 4px 7px; border: 1px solid #dbe4ef; border-radius: 8px; background: #f8fbff; color: #1e3a8a; font-size: 10px; font-weight: 800; }
+    .ppe-item { display: inline-flex; align-items: center; gap: 5px; min-height: 48px; overflow: visible; padding: 4px 7px; border: 1px solid #dbe4ef; border-radius: 8px; background: #f8fbff; color: #1e3a8a; font-size: 10px; font-weight: 800; }
     .ppe-item small { color: #64748b; font-size: 9px; font-weight: 600; }
-    .ppe-icon { display: block; width: 42px; height: 42px; padding: 1px; object-fit: contain; object-position: center; flex: 0 0 42px; border-radius: 50%; background: #fff; overflow: visible; animation: ppeIconFloat 3.2s ease-in-out infinite; }
+    .ppe-icon-frame { display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 46px; border-radius: 50%; background: #fff; overflow: visible; }
+    .ppe-icon { display: block; width: 40px; height: 40px; object-fit: contain; object-position: center; flex: 0 0 40px; border-radius: 0; background: transparent; overflow: visible; animation: ppeIconFloat 3.2s ease-in-out infinite; }
     .ppe-item > span:last-child { display: flex; flex-direction: column; line-height: 1.2; }
     .ppe-form-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
     .ppe-check-item { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: #f8fbff; cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
     .ppe-check-item:hover { border-color: #93c5fd; background: #eff6ff; transform: translateY(-1px); }
     .ppe-check-item:has(input:checked) { border-color: #2563eb; background: #eff6ff; box-shadow: 0 0 0 2px rgba(37, 99, 235, .10); }
     .ppe-check-item input { flex: 0 0 auto; accent-color: #2563eb; }
-    .ppe-form-icon { display: block; width: 46px; height: 46px; padding: 1px; object-fit: contain; object-position: center; flex: 0 0 46px; border-radius: 50%; background: #fff; overflow: visible; }
+    .ppe-form-icon-frame { display: grid; place-items: center; width: 50px; height: 50px; flex: 0 0 50px; border-radius: 50%; background: #fff; overflow: visible; }
+    .ppe-form-icon { display: block; width: 44px; height: 44px; object-fit: contain; object-position: center; flex: 0 0 44px; border-radius: 0; background: transparent; overflow: visible; }
     .ppe-check-text { min-width: 0; color: #1e3a8a; font-size: 11px; font-weight: 800; line-height: 1.2; }
     .ppe-check-text small { display: block; color: #64748b; font-size: 9px; font-weight: 600; margin-top: 2px; }
     @media (max-width: 520px) { .ppe-form-options { grid-template-columns: 1fr; } }
@@ -10340,7 +10342,7 @@
     const selected = Array.isArray(columns) ? columns : [];
     const items = selected.map(column => PPE_LABELS[String(column || "").trim()]).filter(Boolean);
     if (!items.length) return "-";
-    return `<div class="ppe-list">${items.map(item => `<span class="ppe-item"><img class="ppe-icon" src="${item.image}" alt="${escapeHTML(item.thai)} / ${escapeHTML(item.english)}"><span>${escapeHTML(item.thai)}<small>${escapeHTML(item.english)}</small></span></span>`).join("")}</div>`;
+    return `<div class="ppe-list">${items.map(item => `<span class="ppe-item"><span class="ppe-icon-frame"><img class="ppe-icon" src="${item.image}" alt="${escapeHTML(item.thai)} / ${escapeHTML(item.english)}"></span><span>${escapeHTML(item.thai)}<small>${escapeHTML(item.english)}</small></span></span>`).join("")}</div>`;
   }
 
   function renderHazardFormOptions() {
@@ -10386,7 +10388,7 @@
     container.innerHTML = Object.entries(PPE_LABELS).map(([code, item]) => `
       <label class="ppe-check-item">
         <input class="ppeCheck" type="checkbox" value="${escapeHTML(code)}"${selected.has(code) ? " checked" : ""}>
-        <img class="ppe-form-icon" src="${escapeHTML(item.image)}" alt="${escapeHTML(item.thai)} / ${escapeHTML(item.english)}">
+        <span class="ppe-form-icon-frame"><img class="ppe-form-icon" src="${escapeHTML(item.image)}" alt="${escapeHTML(item.thai)} / ${escapeHTML(item.english)}"></span>
         <span class="ppe-check-text">${escapeHTML(item.thai)}<small>${escapeHTML(item.english)}</small></span>
       </label>`).join("");
   }
