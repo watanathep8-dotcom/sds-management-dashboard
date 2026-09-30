@@ -832,7 +832,7 @@
             <th><span class="bilingual-label">มาตรการดับเพลิง<small>Firefighting measures</small></span></th>
             <th class="thai-sds-column"><span class="bilingual-label">SDS ภาษาไทย<small>Thai SDS</small></span></th>
             <th><span class="bilingual-label">SDS ภาษาอังกฤษ<small>English SDS</small></span></th>
-            <th class="qr-column"><span class="bilingual-label">QR Code<small>พิมพ์ QR</small></span></th>
+            <th class="qr-column"><span class="bilingual-label">เอกสาร PDF<small>PDF / Link</small></span></th>
             <th class="action-column"><span class="bilingual-label">แก้ไข<small>Edit</small></span></th>
             <th class="action-column"><span class="bilingual-label">ลบ<small>Delete</small></span></th>
           </tr>
@@ -10621,7 +10621,7 @@
     if (filtered.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="12"><div class="empty-state"><span class="bilingual-label">ไม่พบข้อมูล SDS<small>No SDS data found</small></span></div></td>
+          <td colspan="13"><div class="empty-state"><span class="bilingual-label">ไม่พบข้อมูล SDS<small>No SDS data found</small></span></div></td>
         </tr>`;
       return;
     }
@@ -10643,7 +10643,9 @@
           <td class="thai-sds-column">${languageSdsCell(item, "Thai")}</td>
          <td>${languageSdsCell(item, "English")}</td>
           <td class="qr-cell">
-            <button class="qr-btn" type="button" title="พิมพ์ QR Code" onclick="showQrCode(decodeURIComponent('${encodeURIComponent(String(item.id))}'))"><span class="bilingual-label">▦ พิมพ์ QR<small>Print QR</small></span></button>
+            <a class="pdf-btn sds-direct-link" title="เปิดข้อมูล SDS" href="${escapeHTML(publicSdsUrl(item))}" target="_blank" rel="noopener">
+              <span class="bilingual-label">📄 เปิดข้อมูล SDS<small>Open SDS link</small></span>
+            </a>
           </td>
          <td class="action-cell">
             <button class="action-btn" title="แก้ไข" onclick="editSDS(${item.id})">✏️</button>
@@ -10692,7 +10694,7 @@
       return `${item.thai || ""} / ${item.english || ""}${detail ? `: ${detail}` : ""}`;
     }).join(" | ");
     const rows = [
-      ["ลำดับ / No.", "กลุ่ม / Group", "สารเคมี ภาษาไทย / Chemical (Thai)", "สารเคมี ภาษาอังกฤษ / Chemical (English)", "เลข CAS / CAS Number", "สัญลักษณ์ความอันตราย / Pictogram", "จุดวาบไฟ / Flash Point", "มาตรการปฐมพยาบาล / First aid measures", "มาตรการดับเพลิง / Firefighting measures", "SDS ภาษาไทย / Thai SDS", "SDS ภาษาอังกฤษ / English SDS", "ลิงก์ QR / QR URL"],
+      ["ลำดับ / No.", "กลุ่ม / Group", "สารเคมี ภาษาไทย / Chemical (Thai)", "สารเคมี ภาษาอังกฤษ / Chemical (English)", "เลข CAS / CAS Number", "สัญลักษณ์ความอันตราย / Pictogram", "จุดวาบไฟ / Flash Point", "มาตรการปฐมพยาบาล / First aid measures", "มาตรการดับเพลิง / Firefighting measures", "SDS ภาษาไทย / Thai SDS", "SDS ภาษาอังกฤษ / English SDS", "ลิงก์ข้อมูล SDS / SDS Link"],
      ...sdsData.map(item => {
         const thaiAvailable = Boolean(item.thaiPdfUrl || item.thaiSdsUrl || item.thaiPdfFileId || item.thaiSdsFileId);
         const englishAvailable = Boolean(item.englishPdfUrl || item.englishSdsUrl || item.pdfUrl || item.englishPdfFileId || item.englishSdsFileId || item.pdfFileId);
