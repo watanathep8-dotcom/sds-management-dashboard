@@ -12767,10 +12767,17 @@
       if (isRemote) {
         return fetch(apiUrl, {
           method: "POST",
-          mode: "no-cors",
+          mode: "cors",
+          credentials: "omit",
           headers: { "Content-Type": "text/plain;charset=UTF-8" },
           body: JSON.stringify({ action: "saveColumnWidths", columnWidths: normalized })
-        }).then(function () { return normalized; });
+        }).then(function (response) {
+          if (!response.ok) throw new Error("Apps Script column width save HTTP " + response.status);
+          return response.json();
+        }).then(function (response) {
+          if (!response || response.ok === false) throw new Error(response && response.error || "บันทึกค่าความกว้างส่วนกลางไม่สำเร็จ");
+          return normalized;
+        });
       }
 
       return Promise.resolve(normalized);
