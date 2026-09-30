@@ -272,6 +272,7 @@
       display: flex; align-items: center; justify-content: space-between;
       gap: 15px; flex-wrap: wrap; position: relative; z-index: 5;
     }
+    .table-toolbar-actions { display: flex; align-items: center; justify-content: flex-end; gap: 9px; flex-wrap: wrap; }
     .toolbar-left { display: flex; gap: 10px; flex-wrap: wrap; }
     .filter-combobox { position: relative; width: 155px; }
     .filter-combobox .filter-input { width: 100%; padding-right: 38px; }
@@ -796,6 +797,18 @@
     .settings-add h4 { color: #1e3a8a; font-size: 15px; }
     .settings-add .settings-name-input { margin-bottom: 3px; }
     .settings-footer { justify-content: flex-end; border-top: 1px solid var(--border); border-bottom: 0; background: #fff; }
+    .column-width-dialog { width: min(1120px, 100%); }
+    .column-width-help { margin-bottom: 14px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .column-width-viewport { overflow-x: auto; padding: 4px 2px 12px; border: 1px solid #dbe4ef; border-radius: 12px; background: #f8fbff; }
+    .column-width-strip { display: flex; align-items: stretch; min-width: max-content; min-height: 118px; padding: 12px; }
+    .column-width-cell { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 5px; min-width: 60px; min-height: 92px; padding: 10px 8px; border: 1px solid #bfdbfe; border-radius: 9px; background: #fff; color: #1e3a8a; text-align: center; }
+    .column-width-cell strong { font-size: 12px; line-height: 1.25; overflow-wrap: anywhere; }
+    .column-width-cell small { color: var(--muted); font-size: 10px; line-height: 1.2; }
+    .column-width-cell em { color: #2563eb; font-size: 10px; font-style: normal; font-weight: 800; }
+    .column-width-handle { flex: 0 0 12px; position: relative; border: 0; background: transparent; cursor: col-resize; touch-action: none; }
+    .column-width-handle::after { content: "⋮"; position: absolute; inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: 8px; height: 42px; border: 1px solid #93c5fd; border-radius: 5px; background: #dbeafe; color: #2563eb; font-size: 17px; line-height: 36px; }
+    .column-width-handle:hover::after, .column-width-handle:focus-visible::after { background: #bfdbfe; border-color: #2563eb; outline: none; }
+    body.column-width-dragging { cursor: col-resize; user-select: none; }
   </style>
 </head>
 
@@ -823,6 +836,27 @@
     <div class="settings-footer">
       <button class="btn-secondary" type="button" onclick="closeHazardSettings()"><span class="bilingual-label">ยกเลิก<small>Cancel</small></span></button>
       <button class="btn-primary" type="button" onclick="saveHazardSettings()"><span class="bilingual-label">บันทึกการตั้งค่า<small>Save settings</small></span></button>
+    </div>
+  </div>
+</div>
+<div class="settings-modal" id="columnWidthModal" hidden onclick="closeColumnWidthSettings(event)">
+  <div class="settings-dialog column-width-dialog" onclick="event.stopPropagation()">
+    <div class="settings-header">
+      <div>
+        <h3><span class="bilingual-label">↔ ตั้งค่าความกว้างคอลัมน์<small>Column Width Settings</small></span></h3>
+        <p>ลากเส้นแบ่งระหว่างช่องเพื่อปรับความกว้าง แล้วกดบันทึก<br><span class="bilingual-label"><small>Drag the handles between columns, then save</small></span></p>
+      </div>
+      <button class="settings-close" type="button" aria-label="ปิดการตั้งค่าความกว้าง" onclick="closeColumnWidthSettings()">×</button>
+    </div>
+    <div class="settings-body">
+      <div class="column-width-help">ลากตัวจับ <strong>⋮</strong> ระหว่างช่องไปทางซ้ายหรือขวาได้เลย / Drag the <strong>⋮</strong> handles left or right.</div>
+      <div class="column-width-viewport">
+        <div class="column-width-strip" id="columnWidthStrip"></div>
+      </div>
+    </div>
+    <div class="settings-footer">
+      <button class="btn-secondary" type="button" onclick="closeColumnWidthSettings()"><span class="bilingual-label">ยกเลิก<small>Cancel</small></span></button>
+      <button class="btn-primary" type="button" onclick="saveColumnWidthSettings()"><span class="bilingual-label">บันทึก<small>Save</small></span></button>
     </div>
   </div>
 </div>
@@ -877,11 +911,17 @@
 
       </div>
 
-      <button class="btn-secondary export-btn" onclick="exportCSV()"><span class="bilingual-label">↓ ส่งออก CSV<small>Export CSV</small></span></button>
+      <div class="table-toolbar-actions">
+        <button class="settings-btn" type="button" onclick="openColumnWidthSettings()"><span class="bilingual-label">↔ ตั้งค่าความกว้าง<small>Column widths</small></span></button>
+        <button class="btn-secondary export-btn" onclick="exportCSV()"><span class="bilingual-label">↓ ส่งออก CSV<small>Export CSV</small></span></button>
+      </div>
     </div>
 
     <div class="table-wrapper">
-      <table>
+      <table id="sdsMainTable">
+        <colgroup id="sdsTableColgroup">
+          <col data-column-index="1"><col data-column-index="2"><col data-column-index="3"><col data-column-index="4"><col data-column-index="5"><col data-column-index="6"><col data-column-index="7"><col data-column-index="8"><col data-column-index="9"><col data-column-index="10"><col data-column-index="11"><col data-column-index="12"><col data-column-index="13">
+        </colgroup>
         <thead>
           <tr>
             <th><span class="bilingual-label">ลำดับ<small>No.</small></span></th>
@@ -12070,6 +12110,158 @@
   let hazardSettingsDraft = [];
   let newHazardIconId = "sparkle";
 
+  const COLUMN_WIDTH_SETTINGS_KEY = "sdsTableColumnWidthsV1";
+  const COLUMN_WIDTH_COLUMNS = [
+    { index: 1, thai: "ลำดับ", english: "No.", min: 55, max: 180, fallback: 70 },
+    { index: 2, thai: "กลุ่ม", english: "Group", min: 75, max: 220, fallback: 100 },
+    { index: 3, thai: "สารเคมี", english: "Chemical", min: 130, max: 380, fallback: 180 },
+    { index: 4, thai: "สัญลักษณ์ความอันตราย", english: "Pictogram", min: 150, max: 340, fallback: 200 },
+    { index: 5, thai: "เลข CAS", english: "CAS No.", min: 80, max: 220, fallback: 100 },
+    { index: 6, thai: "จุดวาบไฟ", english: "Flash Point", min: 90, max: 220, fallback: 100 },
+    { index: 7, thai: "มาตรการปฐมพยาบาล", english: "First aid", min: 140, max: 420, fallback: 200 },
+    { index: 8, thai: "มาตรการดับเพลิง", english: "Firefighting", min: 140, max: 420, fallback: 200 },
+    { index: 10, thai: "SDS ภาษาอังกฤษ", english: "English SDS", min: 85, max: 220, fallback: 100 },
+    { index: 11, thai: "เอกสาร PDF", english: "PDF / Link", min: 85, max: 240, fallback: 100 },
+    { index: 12, thai: "แก้ไข", english: "Edit", min: 55, max: 160, fallback: 70 },
+    { index: 13, thai: "ลบ", english: "Delete", min: 55, max: 160, fallback: 70 }
+  ];
+  let columnWidthDraft = {};
+  let columnWidthDrag = null;
+
+  function clampColumnWidth(value, column) {
+    return Math.round(Math.min(column.max, Math.max(column.min, Number(value) || column.fallback)));
+  }
+
+  function readSavedColumnWidths() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(COLUMN_WIDTH_SETTINGS_KEY) || "null");
+      return saved && typeof saved === "object" ? saved : {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function getColumnWidthState() {
+    const table = document.getElementById("sdsMainTable");
+    const saved = readSavedColumnWidths();
+    const state = {};
+    COLUMN_WIDTH_COLUMNS.forEach(column => {
+      const header = table?.querySelector(`thead th:nth-child(${column.index})`);
+      const measured = header ? Math.round(header.getBoundingClientRect().width) : column.fallback;
+      state[column.index] = clampColumnWidth(saved[column.index] ?? measured, column);
+    });
+    return state;
+  }
+
+  function applyColumnWidths(widths) {
+    const table = document.getElementById("sdsMainTable");
+    const colgroup = document.getElementById("sdsTableColgroup");
+    if (!table || !colgroup) return;
+    COLUMN_WIDTH_COLUMNS.forEach(column => {
+      const col = colgroup.querySelector(`col[data-column-index="${column.index}"]`);
+      if (!col) return;
+      const width = clampColumnWidth(widths[column.index], column);
+      col.style.width = `${width}px`;
+      col.style.minWidth = `${width}px`;
+      col.style.display = "";
+    });
+    const thaiColumn = colgroup.querySelector('col[data-column-index="9"]');
+    if (thaiColumn) thaiColumn.style.display = "none";
+  }
+
+  function syncColumnWidthEditor() {
+    const strip = document.getElementById("columnWidthStrip");
+    if (!strip) return;
+    COLUMN_WIDTH_COLUMNS.forEach(column => {
+      const cell = strip.querySelector(`.column-width-cell[data-column-index="${column.index}"]`);
+      if (!cell) return;
+      const width = clampColumnWidth(columnWidthDraft[column.index], column);
+      cell.style.width = `${width}px`;
+      cell.style.flexBasis = `${width}px`;
+      const size = cell.querySelector("em");
+      if (size) size.textContent = `${width}px`;
+    });
+  }
+
+  function renderColumnWidthEditor() {
+    const strip = document.getElementById("columnWidthStrip");
+    if (!strip) return;
+    strip.innerHTML = "";
+    COLUMN_WIDTH_COLUMNS.forEach((column, position) => {
+      const cell = document.createElement("div");
+      cell.className = "column-width-cell";
+      cell.dataset.columnIndex = String(column.index);
+      const thai = document.createElement("strong");
+      thai.textContent = column.thai;
+      const english = document.createElement("small");
+      english.textContent = column.english;
+      const size = document.createElement("em");
+      cell.append(thai, english, size);
+      strip.appendChild(cell);
+      if (position < COLUMN_WIDTH_COLUMNS.length - 1) {
+        const handle = document.createElement("button");
+        handle.type = "button";
+        handle.className = "column-width-handle";
+        handle.dataset.leftColumnIndex = String(column.index);
+        handle.setAttribute("aria-label", `ปรับความกว้างช่อง ${column.thai}`);
+        handle.addEventListener("pointerdown", event => startColumnWidthDrag(event, column.index));
+        strip.appendChild(handle);
+      }
+    });
+    syncColumnWidthEditor();
+  }
+
+  function startColumnWidthDrag(event, leftColumnIndex) {
+    const column = COLUMN_WIDTH_COLUMNS.find(item => item.index === leftColumnIndex);
+    if (!column) return;
+    event.preventDefault();
+    columnWidthDrag = { leftColumnIndex, startX: event.clientX, startWidth: columnWidthDraft[leftColumnIndex] };
+    document.body.classList.add("column-width-dragging");
+    document.addEventListener("pointermove", moveColumnWidthDrag);
+    document.addEventListener("pointerup", stopColumnWidthDrag, { once: true });
+    document.addEventListener("pointercancel", stopColumnWidthDrag, { once: true });
+  }
+
+  function moveColumnWidthDrag(event) {
+    if (!columnWidthDrag) return;
+    const column = COLUMN_WIDTH_COLUMNS.find(item => item.index === columnWidthDrag.leftColumnIndex);
+    if (!column) return;
+    columnWidthDraft[column.index] = clampColumnWidth(columnWidthDrag.startWidth + event.clientX - columnWidthDrag.startX, column);
+    syncColumnWidthEditor();
+  }
+
+  function stopColumnWidthDrag() {
+    document.removeEventListener("pointermove", moveColumnWidthDrag);
+    document.removeEventListener("pointerup", stopColumnWidthDrag);
+    document.removeEventListener("pointercancel", stopColumnWidthDrag);
+    document.body.classList.remove("column-width-dragging");
+    columnWidthDrag = null;
+  }
+
+  function openColumnWidthSettings() {
+    columnWidthDraft = getColumnWidthState();
+    renderColumnWidthEditor();
+    const modal = document.getElementById("columnWidthModal");
+    if (modal) modal.hidden = false;
+  }
+
+  function closeColumnWidthSettings(event) {
+    if (event && event.target !== event.currentTarget) return;
+    stopColumnWidthDrag();
+    const modal = document.getElementById("columnWidthModal");
+    if (modal) modal.hidden = true;
+  }
+
+  function saveColumnWidthSettings() {
+    const saved = {};
+    COLUMN_WIDTH_COLUMNS.forEach(column => {
+      saved[column.index] = clampColumnWidth(columnWidthDraft[column.index], column);
+    });
+    localStorage.setItem(COLUMN_WIDTH_SETTINGS_KEY, JSON.stringify(saved));
+    applyColumnWidths(saved);
+    closeColumnWidthSettings();
+  }
+
   function openHazardSettings() {
     hazardSettingsDraft = hazardDefinitions.map(definition => ({ ...definition }));
     newHazardIconId = "sparkle";
@@ -12460,19 +12652,22 @@
   function refreshDashboard() {
     renderHazardFormOptions();
     renderTable();
+    if (Object.keys(readSavedColumnWidths()).length) applyColumnWidths(getColumnWidthState());
     updateSummary();
   }
 
   document.addEventListener("keydown", event => {
    if (event.key === "Escape") {
       if (document.getElementById("pdfModal").classList.contains("show")) {
-       closePdfViewer();
+        closePdfViewer();
       } else if (document.getElementById("sdsQuickModal").classList.contains("show")) {
         closeSdsQuickView();
       } else if (document.getElementById("qrModal").classList.contains("show")) {
         closeQrModal();
-     } else {
-       closeDrawer();
+      } else if (!document.getElementById("columnWidthModal").hidden) {
+        closeColumnWidthSettings();
+      } else {
+        closeDrawer();
      }
     }
   });
