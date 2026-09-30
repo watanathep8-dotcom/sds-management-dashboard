@@ -595,6 +595,8 @@
     .sds-language-actions { justify-content: flex-start; }
     .sds-language-option { flex: 1 1 190px; min-height: 48px; }
     .sds-language-empty { width: 100%; padding: 12px; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); text-align: center; font-size: 12px; }
+    .sds-record-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; padding: 2px 4px 0; color: #1e293b; font-size: 13px; font-weight: 700; }
+    .sds-record-meta span { font-weight: 500; letter-spacing: .04em; }
     .sds-register-title { text-align: center; color: #1e3a8a; font-size: 17px; font-weight: 800; margin-bottom: 12px; }
     .sds-register-title small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 600; }
     .sds-register-table { width: auto; max-width: 100%; min-width: 0; margin: 0 auto; border-collapse: collapse; table-layout: auto; background: #fff; }
@@ -11278,14 +11280,6 @@
     }).map(language => (LANGUAGE_LABELS[language] || { thai: language, english: language }).thai).join(" / ");
     const liveItem = sdsData.find(row => String(row.id) === String(item.id));
     const pdfItem = liveItem ? { ...liveItem, ...item } : item;
-    const languageOptions = getSdsLanguages(item)
-      .filter(language => language !== "Thai")
-      .map(language => ({ language, source: getPdfSourceForLanguage(pdfItem, language) }))
-      .filter(option => option.source.url || option.source.fileId);
-    const languageButtons = languageOptions.map(option => {
-      const labels = LANGUAGE_LABELS[option.language] || { thai: option.language, english: option.language };
-      return `<button class="btn-primary sds-language-option" type="button" onclick="openQuickSdsLanguage('${option.language}')"><span class="bilingual-label">📄 เปิด SDS ${escapeHTML(labels.thai)}<small>Open ${escapeHTML(labels.english)} SDS</small></span></button>`;
-    }).join("");
     const composition = compositionText(item);
     const ratio = item.ratio || item.concentration || item.percentage || "-";
     const compositionMarkup = bilingualDataMarkup(composition);
@@ -11320,9 +11314,9 @@
         <tr><th>มาตรการดับเพลิง<small>Firefighting measures</small></th><td colspan="3" class="register-measures">${firefighting}</td></tr>
         <tr><th>อุปกรณ์ป้องกันส่วนบุคคล<small>Personal protective equipment</small></th><td colspan="3" class="register-ppe">${personalProtectiveEquipment}</td></tr>
       </table>
-      <div class="sds-quick-actions sds-language-actions">
-        <div style="width:100%;"><span class="bilingual-label">เอกสาร SDS ต้นฉบับ<small>Original SDS documents</small></span></div>
-        ${languageButtons || `<div class="sds-language-empty">ไม่พบไฟล์ SDS สำหรับเปิดจาก QR / No public SDS PDF is available for this QR</div>`}
+      <div class="sds-record-meta" aria-label="ข้อมูลผู้บันทึกและวันที่">
+        <div>ผู้บันทึก <span>(................................)</span></div>
+        <div>วันที่ <span>(................................)</span></div>
       </div>
       <div class="sds-quick-actions">
         <button class="btn-secondary" type="button" onclick="closeSdsQuickView()"><span class="bilingual-label">ปิด<small>Close</small></span></button>
