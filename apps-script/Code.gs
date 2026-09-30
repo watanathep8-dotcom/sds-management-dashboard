@@ -20,6 +20,25 @@ var SDS_HEADERS = [
 // this server-side check protects the API even if the browser is bypassed.
 var DELETE_PASSWORD = "121314";
 
+// Shared UI settings are stored in Script Properties so every viewer of the
+// public dashboard receives the same table layout. This setting contains only
+// validated column widths; it does not contain SDS records or credentials.
+var COLUMN_WIDTHS_PROPERTY = "SDS_TABLE_COLUMN_WIDTHS_V1";
+var COLUMN_WIDTH_LIMITS = {
+  "1": { min: 55, max: 180, fallback: 70 },
+  "2": { min: 75, max: 220, fallback: 100 },
+  "3": { min: 130, max: 380, fallback: 180 },
+  "4": { min: 150, max: 340, fallback: 200 },
+  "5": { min: 80, max: 220, fallback: 100 },
+  "6": { min: 90, max: 220, fallback: 100 },
+  "7": { min: 140, max: 420, fallback: 200 },
+  "8": { min: 140, max: 420, fallback: 200 },
+  "10": { min: 85, max: 220, fallback: 100 },
+  "11": { min: 85, max: 240, fallback: 100 },
+  "12": { min: 55, max: 160, fallback: 70 },
+  "13": { min: 55, max: 160, fallback: 70 }
+};
+
 // New installations start empty. SDS records are added by the administrator.
 var SAMPLE_ROWS = [];
 
@@ -39,6 +58,10 @@ function doGet(e) {
     }
   }
 
+  if (params.action === "columnWidths") {
+    return jsonResponse_({ ok: true, data: getColumnWidths_() }, params.callback);
+  }
+
   return HtmlService.createTemplateFromFile("Index")
     .evaluate()
     .setTitle("ระบบจัดการ SDS | SDS Management")
@@ -56,6 +79,8 @@ function doPost(e) {
       result = saveSds(payload.record || {}, payload.file || null);
     } else if (action === "delete") {
       result = deleteSds(payload.id, payload.password);
+    } else if (action === "saveColumnWidths") {
+      result = saveColumnWidths_(payload.columnWidths);
     } else {
       throw new Error("ไม่รองรับคำสั่งนี้ / Unsupported action.");
     }
@@ -64,6 +89,60 @@ function doPost(e) {
   } catch (error) {
     return jsonResponse_({ ok: false, error: error.message });
   }
+}
+
+function getColumnWidths_() {
+  var properties = PropertiesService.getScriptProperties();
+  var raw = properties.getProperty(COLUMN_WIDTHS_PROPERTY);
+  var saved = {};
+  if (raw) {
+    try { saved = JSON.parse(raw) || {}; } catch (ignored) { saved = {}; }
+  }
+
+  var normalized = {};
+  Object.keys(COLUMN_WIDTH_LIMITS).forEach(function(index) {
+    if (saved[index] === undefined || saved[index] === null || saved[index] === "") return;
+    normalized[index] = normalizeColumnWidth_(saved[index], COLUMN_WIDTH_LIMITS[index]);
+  });
+  return normalized;
+}
+
+// Public wrappers are used by the Apps Script-hosted dashboard through
+// google.script.run. The underscore-suffixed helpers remain internal.
+function getColumnWidths() {
+  return getColumnWidths_();
+}
+
+function saveColumnWidths_(widths) {
+  if (!widths || typeof widths !== "object" || Array.isArray(widths)) {
+    throw new Error("รูปแบบค่าความกว้างตารางไม่ถูกต้อง / Invalid column width settings.");
+  }
+
+  var normalized = {};
+  Object.keys(COLUMN_WIDTH_LIMITS).forEach(function(index) {
+    var limit = COLUMN_WIDTH_LIMITS[index];
+    var value = widths[index];
+    if (value === undefined || value === null || value === "") value = limit.fallback;
+    normalized[index] = normalizeColumnWidth_(value, limit);
+  });
+
+  // Deliberately store only the validated layout object. This endpoint does
+  // not accept SDS records, files, or arbitrary Script Properties.
+  PropertiesService.getScriptProperties().setProperty(
+    COLUMN_WIDTHS_PROPERTY,
+    JSON.stringify(normalized)
+  );
+  return normalized;
+}
+
+function saveColumnWidths(widths) {
+  return saveColumnWidths_(widths);
+}
+
+function normalizeColumnWidth_(value, limit) {
+  var number = Number(value);
+  if (!isFinite(number)) number = limit.fallback;
+  return Math.round(Math.min(limit.max, Math.max(limit.min, number)));
 }
 
 /**

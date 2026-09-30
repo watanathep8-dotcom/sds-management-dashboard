@@ -12260,6 +12260,12 @@
     localStorage.setItem(COLUMN_WIDTH_SETTINGS_KEY, JSON.stringify(saved));
     applyColumnWidths(saved);
     closeColumnWidthSettings();
+    if (typeof window.saveSharedColumnWidths === "function") {
+      Promise.resolve(window.saveSharedColumnWidths(saved)).catch(error => {
+        console.error("Shared column width save failed", error);
+        alert("บันทึกความกว้างไว้เฉพาะเครื่องนี้ เนื่องจากบันทึกค่ากลางไม่สำเร็จ");
+      });
+    }
   }
 
   function openHazardSettings() {
@@ -12696,6 +12702,87 @@
     var baseView = window.viewSDS;
     var defaultPdfEmptyMarkup = document.getElementById("pdfEmpty").innerHTML;
 
+    function normalizeSharedColumnWidths(widths) {
+      if (!widths || typeof widths !== "object" || Array.isArray(widths)) return {};
+      var normalized = {};
+      COLUMN_WIDTH_COLUMNS.forEach(function (column) {
+        if (widths[column.index] === undefined || widths[column.index] === null || widths[column.index] === "") return;
+        normalized[column.index] = clampColumnWidth(widths[column.index], column);
+      });
+      return normalized;
+    }
+
+    function applySharedColumnWidths(widths) {
+      var normalized = normalizeSharedColumnWidths(widths);
+      if (!Object.keys(normalized).length) return false;
+      localStorage.setItem(COLUMN_WIDTH_SETTINGS_KEY, JSON.stringify(normalized));
+      applyColumnWidths(normalized);
+      return true;
+    }
+
+    function loadSharedColumnWidths() {
+      if (isAppsScript) {
+        return new Promise(function (resolve, reject) {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .getColumnWidths();
+        });
+      }
+
+      if (isRemote) {
+        var settingsUrl = new URL(apiUrl, window.location.href);
+        settingsUrl.searchParams.set("action", "columnWidths");
+        settingsUrl.searchParams.set("_", String(Date.now()));
+        return fetch(settingsUrl.toString(), {
+          method: "GET",
+          mode: "cors",
+          credentials: "omit",
+          cache: "no-store"
+        }).then(function (response) {
+          if (!response.ok) throw new Error("Apps Script column widths HTTP " + response.status);
+          return response.json();
+        }).then(function (response) {
+          if (!response || response.ok === false) throw new Error(response && response.error || "Column width API error");
+          return response.data || {};
+        });
+      }
+
+      return Promise.resolve(null);
+    }
+
+    window.saveSharedColumnWidths = function (widths) {
+      var normalized = normalizeSharedColumnWidths(widths);
+      if (!Object.keys(normalized).length) return Promise.resolve(null);
+
+      if (isAppsScript) {
+        return new Promise(function (resolve, reject) {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .saveColumnWidths(normalized);
+        });
+      }
+
+      if (isRemote) {
+        return fetch(apiUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
+          body: JSON.stringify({ action: "saveColumnWidths", columnWidths: normalized })
+        }).then(function () { return normalized; });
+      }
+
+      return Promise.resolve(normalized);
+    };
+
+    function loadSharedColumnWidthsSafely() {
+      return loadSharedColumnWidths().catch(function (error) {
+        console.warn("Shared column widths unavailable; using local fallback", error);
+        return null;
+      });
+    }
+
     function resetPdfEmpty() {
       var empty = document.getElementById("pdfEmpty");
       if (empty) empty.innerHTML = defaultPdfEmptyMarkup;
@@ -12946,14 +13033,22 @@
 
     function loadFromAppsScript() {
       setConnectionStatus("เชื่อมต่อ Google Sheet / Drive", "Connected to Google Sheets / Drive");
-      google.script.run
-        .withSuccessHandler(applyData)
-        .withFailureHandler(function (error) {
+      var rowsPromise = new Promise(function (resolve, reject) {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .listSds();
+      });
+      Promise.all([rowsPromise, loadSharedColumnWidthsSafely()])
+        .then(function (results) {
+          applyData(results[0]);
+          if (results[1]) applySharedColumnWidths(results[1]);
+        })
+        .catch(function (error) {
           console.error(error);
           setConnectionStatus("เชื่อมต่อ Google Sheet ไม่สำเร็จ", "Google Sheets connection failed");
           alert(error && error.message ? error.message : "ไม่สามารถโหลดข้อมูลจาก Google Sheet ได้");
-        })
-        .listSds();
+        });
     }
 
     function loadFromRemoteApi() {
@@ -12964,7 +13059,7 @@
       // Apps Script now returns CORS headers for the public API. Prefer a
       // normal JSON request so signed-in Google sessions cannot rewrite the
       // web-app URL to an account-scoped /macros/u/... route in some browsers.
-      return fetch(requestUrl.toString(), {
+      var dataPromise = fetch(requestUrl.toString(), {
         method: "GET",
         mode: "cors",
         credentials: "omit",
@@ -12976,9 +13071,14 @@
         })
         .then(function (response) {
           if (!response || response.ok === false) throw new Error(response && response.error || "API error");
-          applyData(response.data || []);
+          return response;
+        });
+      return Promise.all([dataPromise, loadSharedColumnWidthsSafely()])
+        .then(function (results) {
+          applyData(results[0].data || []);
+          if (results[1]) applySharedColumnWidths(results[1]);
           setConnectionStatus();
-          return response.data || [];
+          return results[0].data || [];
         });
     }
 

@@ -30,6 +30,8 @@
 
 หน้า Apps Script จะเป็นหน้าสำหรับผู้ดูแลระบบ ส่วนการอ่านข้อมูลสาธารณะใช้ Public API โดยเติม `action=api` ซึ่งหน้า GitHub จะเรียกให้อัตโนมัติ ฟังก์ชันเขียนข้อมูลตรวจสอบ `ADMIN_EMAILS` และไม่ควรเปิดให้ผู้ใช้นิรนามใช้งาน
 
+ปุ่ม `ตั้งค่าความกว้าง / Column widths` จะบันทึกค่าความกว้างตารางไว้ใน Script Properties ผ่าน `action=saveColumnWidths` และหน้าเว็บจะอ่านค่ากลางผ่าน `action=columnWidths` ดังนั้นผู้ใช้ทุกคนจะเห็นความกว้างเดียวกัน ไม่ขึ้นกับ `localStorage` ของเครื่องใดเครื่องหนึ่ง หลังแก้ `apps-script/Code.gs` ต้องอัปเดต deployment ของ Apps Script ให้ใช้เวอร์ชันใหม่ด้วย
+
 การเปิด PDF จาก Google Drive ใช้ฟังก์ชัน `getSdsFile()` ส่งไฟล์ผ่าน Web app แล้วสร้างตัวแสดง PDF ในหน้าเว็บ ผู้ชมจึงไม่ต้องเปิดหรือ Login Google Drive โดยตรง แต่ Public API ต้องตั้งเป็น `Execute as เจ้าของสคริปต์` และ `Who has access = Anyone` เพื่อให้ Apps Script อ่านไฟล์แทนผู้ชมได้
 
 ## 2) เชื่อมต่อหน้า GitHub Pages
