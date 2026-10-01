@@ -1132,7 +1132,10 @@
     { id: "environmental-hazard", name: "pictogram-6.png", image: "assets/pictograms/pictogram-6.png", className: "pictogram-environment" },
     { id: "flammable", name: "pictogram-7.png", image: "assets/pictograms/pictogram-7.png", className: "pictogram-flammable" },
     { id: "irritant", name: "pictogram-8.png", image: "assets/pictograms/pictogram-8.png", className: "pictogram-irritant" },
-    { id: "acute-toxicity", name: "pictogram-9.png", image: "assets/pictograms/pictogram-9.png", className: "pictogram-toxic" }
+    { id: "acute-toxicity", name: "pictogram-9.png", image: "assets/pictograms/pictogram-9.png", className: "pictogram-toxic" },
+    { id: "exploding-bomb", name: "pictogram-10.png", image: "assets/pictograms/pictogram-10.png", className: "pictogram-explosive" },
+    { id: "gas-cylinder", name: "pictogram-11.png", image: "assets/pictograms/pictogram-11.png", className: "pictogram-gas" },
+    { id: "oxidizer", name: "pictogram-12.png", image: "assets/pictograms/pictogram-12.png", className: "pictogram-oxidizer" }
   ];
   const ICON_LIBRARY = [
     { id: "flame", icon: "🔥", label: "Flame", className: "flame-icon" },
@@ -1182,7 +1185,11 @@
 
   function loadHazardDefinitions() {
     try {
-      return sanitizeHazardDefinitions(JSON.parse(localStorage.getItem(HAZARD_SETTINGS_KEY) || "null"));
+      const stored = JSON.parse(localStorage.getItem(HAZARD_SETTINGS_KEY) || "null");
+      if (!Array.isArray(stored) || !stored.length) return sanitizeHazardDefinitions(null);
+      const storedKeys = new Set(stored.flatMap(item => [item?.id, item?.name].filter(Boolean).map(value => String(value).toLowerCase())));
+      const migrated = [...stored, ...DEFAULT_HAZARD_DEFINITIONS.filter(item => !storedKeys.has(item.id) && !storedKeys.has(item.name))];
+      return sanitizeHazardDefinitions(migrated);
     } catch (error) {
       return sanitizeHazardDefinitions(null);
     }
@@ -1195,7 +1202,10 @@
     "acute-toxicity": { thai: "พิษเฉียบพลัน", english: "Acute Toxicity" },
     corrosive: { thai: "กัดกร่อน", english: "Corrosive" },
     irritant: { thai: "ระคายเคือง/เป็นอันตราย", english: "Irritant / Harmful" },
-    "environmental-hazard": { thai: "อันตรายต่อสิ่งแวดล้อม", english: "Environmental Hazard" }
+    "environmental-hazard": { thai: "อันตรายต่อสิ่งแวดล้อม", english: "Environmental Hazard" },
+    "exploding-bomb": { thai: "ระเบิด", english: "Exploding bomb" },
+    "gas-cylinder": { thai: "ก๊าซภายใต้ความดัน", english: "Gas cylinder" },
+    oxidizer: { thai: "สารออกซิไดซ์", english: "Oxidizer" }
   };
   const STATUS_LABELS = {
     Current: { thai: "ปัจจุบัน", english: "Current" },
@@ -12307,8 +12317,12 @@
     "revision": "",
     "status": "Current",
     "signalWord": "",
-    "hazards": [],
-    "pictograms": [],
+    "hazards": [
+      "pictogram-12.png"
+    ],
+    "pictograms": [
+      "pictogram-12.png"
+    ],
     "flashPoint": "Not flammable",
     "language": "English",
     "sdsLanguages": [

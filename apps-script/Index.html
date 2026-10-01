@@ -884,13 +884,19 @@
     { id: "flammable", name: "Flammable", iconId: "flame", icon: "🔥", className: "flame-icon" },
     { id: "acute-toxicity", name: "Acute Toxicity", aliases: ["Toxic"], iconId: "skull", icon: "☠️", className: "toxic-icon" },
     { id: "corrosive", name: "Corrosive", iconId: "test-tube", icon: "🧪", className: "corrosive-icon" },
-    { id: "irritant", name: "Irritant", iconId: "irritant", icon: "❗", className: "irritant-icon" }
+    { id: "irritant", name: "Irritant", iconId: "irritant", icon: "❗", className: "irritant-icon" },
+    { id: "exploding-bomb", name: "pictogram-10.png", aliases: ["Exploding bomb"], iconId: "exploding-bomb", icon: "💥", className: "hazard-explosive" },
+    { id: "gas-cylinder", name: "pictogram-11.png", aliases: ["Gas cylinder"], iconId: "gas-cylinder", icon: "💨", className: "hazard-gas" },
+    { id: "oxidizer", name: "pictogram-12.png", aliases: ["Oxidizer"], iconId: "oxidizer", icon: "🔥", className: "hazard-oxidizer" }
   ];
   const ICON_LIBRARY = [
     { id: "flame", icon: "🔥", label: "Flame", className: "flame-icon" },
     { id: "skull", icon: "☠️", label: "Toxic", className: "toxic-icon" },
     { id: "test-tube", icon: "🧪", label: "Corrosive", className: "corrosive-icon" },
     { id: "irritant", icon: "❗", label: "Irritant", className: "irritant-icon" },
+    { id: "exploding-bomb", icon: "💥", label: "Exploding bomb", className: "hazard-explosive" },
+    { id: "gas-cylinder", icon: "💨", label: "Gas cylinder", className: "hazard-gas" },
+    { id: "oxidizer", icon: "🔥", label: "Oxidizer", className: "hazard-oxidizer" },
     { id: "sparkle", icon: "✨", label: "Sparkle", className: "hazard-sparkle" },
     { id: "bolt", icon: "⚡", label: "Bolt", className: "hazard-bolt" },
     { id: "bio", icon: "☣️", label: "Biohazard", className: "hazard-bio" },
@@ -933,7 +939,11 @@
 
   function loadHazardDefinitions() {
     try {
-      return sanitizeHazardDefinitions(JSON.parse(localStorage.getItem(HAZARD_SETTINGS_KEY) || "null"));
+      const stored = JSON.parse(localStorage.getItem(HAZARD_SETTINGS_KEY) || "null");
+      if (!Array.isArray(stored) || !stored.length) return sanitizeHazardDefinitions(null);
+      const storedKeys = new Set(stored.flatMap(item => [item?.id, item?.name].filter(Boolean).map(value => String(value).toLowerCase())));
+      const migrated = [...stored, ...DEFAULT_HAZARD_DEFINITIONS.filter(item => !storedKeys.has(item.id) && !storedKeys.has(item.name))];
+      return sanitizeHazardDefinitions(migrated);
     } catch (error) {
       return sanitizeHazardDefinitions(null);
     }
@@ -944,7 +954,10 @@
     flammable: { thai: "ไวไฟ", english: "Flammable" },
     "acute-toxicity": { thai: "พิษเฉียบพลัน", english: "Acute Toxicity" },
     corrosive: { thai: "กัดกร่อน", english: "Corrosive" },
-    irritant: { thai: "ระคายเคือง", english: "Irritant" }
+    irritant: { thai: "ระคายเคือง", english: "Irritant" },
+    "exploding-bomb": { thai: "ระเบิด", english: "Exploding bomb" },
+    "gas-cylinder": { thai: "ก๊าซภายใต้ความดัน", english: "Gas cylinder" },
+    oxidizer: { thai: "สารออกซิไดซ์", english: "Oxidizer" }
   };
   const STATUS_LABELS = {
     Current: { thai: "ปัจจุบัน", english: "Current" },
@@ -961,9 +974,7 @@
   }
 
   function hazardLabels(definition) {
-    return HAZARD_LABELS[definition.id] && definition.name === HAZARD_LABELS[definition.id].english
-      ? HAZARD_LABELS[definition.id]
-      : { thai: definition.name, english: definition.name };
+    return HAZARD_LABELS[definition.id] || { thai: definition.name, english: definition.name };
   }
 
   function filterOptionLabels(inputId, option) {
@@ -2654,26 +2665,55 @@
     "englishPdfName": "09 - Potassium Humate TAE-EN.pdf"
   },
   {
-    "id": 1069,
+    "id": 1111,
     "chemical": "Potassium Nitrate Tech",
-    "cas": "",
-    "supplier": "Surfactant",
+    "chemicalThai": "Potassium Nitrate Tech",
+    "chemicalEnglish": "Potassium Nitrate Tech",
+    "cas": "7757-79-1",
+    "supplier": "",
     "revision": "",
     "status": "Current",
     "signalWord": "",
-    "hazards": [],
-    "flashPoint": "ไม่พบข้อความใน PDF / Text not available; see full SDS",
-    "emergencyResponse": "โปรดดูหัวข้อ 5–6 ใน SDS / See sections 5–6 in the full SDS (ข้อความ PDF อ่านไม่ได้)",
+    "hazards": [
+      "pictogram-12.png"
+    ],
+    "composition": "Solid ,crystalline",
+    "ratio": "-",
+    "components": [
+      {
+        "composition": "Solid ,crystalline",
+        "cas": "7757-79-1",
+        "ratio": "-"
+      }
+    ],
+    "flashPoint": "Not flammable",
+    "emergencyResponse": "",
     "language": "English",
     "sdsLanguages": [
       "English"
     ],
     "thaiSds": false,
     "hasPdf": true,
-    "pdfUrl": "https://mojikenso-sketch.github.io/sds-management-dashboard/assets/sds-library/library-1069-english.pdf",
-    "pdfName": "10 - Potassium Nitrate Tech-EN.pdf",
-    "englishPdfUrl": "https://mojikenso-sketch.github.io/sds-management-dashboard/assets/sds-library/library-1069-english.pdf",
-    "englishPdfName": "10 - Potassium Nitrate Tech-EN.pdf"
+    "pdfUrl": "https://watanathep8-dotcom.github.io/sds-management-dashboard/assets/sds-library/library-1111-english.pdf",
+    "pdfName": "library-1111-english.pdf",
+    "englishPdfUrl": "https://watanathep8-dotcom.github.io/sds-management-dashboard/assets/sds-library/library-1111-english.pdf",
+    "englishPdfName": "library-1111-english.pdf",
+    "sequence": 111,
+    "group": "Surfactant",
+    "responsibleParty": "คลังวัตถุดิบ",
+    "recorder": "พุธิตา",
+    "dateOfUse": "242369",
+    "registerSds": "SD-SDS-WH2-10",
+    "firstAidMeasures": [
+      { "thai": "การสูดดม", "english": "Inhalation", "value": "นำผู้ป่วยออกจากบริเวณที่ได้รับสัมผัส" },
+      { "thai": "การสัมผัสผิวหนัง", "english": "Skin contact", "value": "ถอดเสื้อผ้าที่เปื้อนออก ล้างผิวด้วยน้ำ" },
+      { "thai": "การสัมผัสดวงตา", "english": "Eye contact", "value": "ล้างตาทันทีด้วยน้ำสะอาดอย่างน้อย 15 นาที" },
+      { "thai": "การกลืนกิน", "english": "Ingestion", "value": "ห้ามทำให้อาเจียน ให้ติดต่อแพทย์" }
+    ],
+    "firefightingMeasures": [
+      { "thai": "ผงเคมีแห้ง", "english": "Dry chemical powder", "value": "" }
+    ],
+    "personalProtectiveEquipment": ["V", "W", "X", "Y", "Z", "AA"]
   },
   {
     "id": 1070,
