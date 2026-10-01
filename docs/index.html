@@ -17585,6 +17585,7 @@
   }
 
   function openAddDrawer() {
+    window.sdsEditPassword = "";
     document.getElementById("sdsForm").reset();
     document.getElementById("editId").value = "";
     document.getElementById("sequence").value = Math.max(0, ...sdsData.map(item => Number(item.sequence) || 0)) + 1;
@@ -17950,6 +17951,18 @@
     if (password === null) return null;
     if (password !== "121314") {
       window.alert("รหัสไม่ถูกต้อง ข้อมูลยังไม่ถูกลบ / Incorrect password. Nothing was deleted.");
+      return null;
+    }
+    return password;
+  }
+
+  // Editing an existing record uses the same shared password as deletion.
+  // The Apps Script backend re-checks it, so the prompt is not the only guard.
+  function getEditPassword() {
+    const password = window.prompt("กรุณาใส่รหัสก่อนแก้ไขข้อมูล / Enter edit password");
+    if (password === null) return null;
+    if (password !== "121314") {
+      window.alert("รหัสไม่ถูกต้อง ไม่สามารถแก้ไขข้อมูลได้ / Incorrect password. Editing is not allowed.");
       return null;
     }
     return password;
@@ -19495,9 +19508,9 @@
             .withFailureHandler(function (error) {
               alert(error && error.message ? error.message : "บันทึกข้อมูลไม่สำเร็จ");
             })
-            .saveSds(record, fileData);
+            .saveSds(record, fileData, window.sdsEditPassword || "");
         } else {
-          await postRemote({ action: "save", record: record, file: fileData });
+          await postRemote({ action: "save", record: record, file: fileData, password: window.sdsEditPassword || "" });
           closeDrawer();
           setTimeout(function () { loadFromRemoteApi().catch(function (error) { alert(error.message); }); }, 900);
         }
@@ -19531,6 +19544,9 @@
 
     window.editSDS = function (id) {
       if (publicReadOnly) return;
+      var password = getEditPassword();
+      if (!password) return;
+      window.sdsEditPassword = password;
       return baseEdit(id);
     };
 

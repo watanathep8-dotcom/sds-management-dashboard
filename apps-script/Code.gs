@@ -91,7 +91,7 @@ function doPost(e) {
     var result;
 
     if (action === "save") {
-      result = saveSds(payload.record || {}, payload.file || null);
+      result = saveSds(payload.record || {}, payload.file || null, payload.password);
     } else if (action === "delete") {
       result = deleteSds(payload.id, payload.password);
     } else if (action === "saveColumnWidths") {
@@ -393,7 +393,7 @@ function getSdsFile(fileId) {
   };
 }
 
-function saveSds(record, fileData) {
+function saveSds(record, fileData, password) {
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -406,6 +406,11 @@ function saveSds(record, fileData) {
     }
     var normalized = normalizeRecord_(record);
     existing = existing || findRowById_(sheet, normalized.id);
+    // Updating an existing record requires the shared password (same as
+    // deletion); creating a new record does not. Administrators are exempt.
+    if (existing && String(password || "") !== DELETE_PASSWORD && !isAdmin_()) {
+      throw new Error("รหัสแก้ไขไม่ถูกต้อง / Invalid edit password.");
+    }
     var oldRow = existing ? sheet.getRange(existing, 1, 1, SDS_HEADERS.length).getValues()[0] : null;
     var pdfFileId = oldRow ? String(oldRow[9] || "") : "";
     var pdfName = oldRow ? String(oldRow[10] || "") : "";
