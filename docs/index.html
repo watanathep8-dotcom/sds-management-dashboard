@@ -322,14 +322,17 @@
     thead th:nth-child(1), thead th:nth-child(2) { background: #1e40af; }
     thead th:nth-child(3) { background: #1d4ed8; }
     thead th:nth-child(4) { background: #be123c; }
-    thead th:nth-child(5), thead th:nth-child(6) { background: #2563eb; }
-    thead th:nth-child(7) { background: #0f766e; }
+    thead th:nth-child(5) { background: #0f766e; }
+    thead th:nth-child(6) { background: #2563eb; }
+    thead th:nth-child(7) { background: #059669; }
     thead th:nth-child(8) { background: #d97706; }
     thead th:nth-child(9) { background: #7c3aed; }
     thead th:nth-child(10) { background: #0f766e; }
     thead th:nth-child(11) { background: #059669; }
-    thead th:nth-child(12) { background: #d97706; }
-    thead th:nth-child(13) { background: #dc2626; }
+    thead th:nth-child(12) { background: #0f766e; }
+    thead th:nth-child(13) { background: #d97706; }
+    thead th:nth-child(14) { background: #d97706; }
+    thead th:nth-child(15) { background: #dc2626; }
     td { color: #334155; white-space: normal; overflow-wrap: anywhere; }
     th:nth-child(1), td:nth-child(1) { width: 2.5%; text-align: center; }
     th:nth-child(2), td:nth-child(2) { width: 4%; }
@@ -339,28 +342,31 @@
     td:nth-child(3) .sds-link { justify-content: center; text-align: center; }
     td:nth-child(3) .chemical-name-stack { align-items: center; text-align: center; }
     th:nth-child(4), td:nth-child(4) { width: 200px; min-width: 200px; }
-    th:nth-child(5), td:nth-child(5) { width: 5%; }
+    th:nth-child(5), td:nth-child(5) { width: 180px; min-width: 180px; }
     th:nth-child(6), td:nth-child(6) { width: 5%; }
-    th:nth-child(7), td:nth-child(7) { width: 200px; min-width: 200px; }
-    th:nth-child(8), td:nth-child(8) { width: 200px; min-width: 200px; }
-    th:nth-child(9), td:nth-child(9) { width: 100px; min-width: 100px; text-align: center; }
-    th:nth-child(10), td:nth-child(10) { width: 100px; min-width: 100px; text-align: center; }
-    th:nth-child(11), td:nth-child(11) { width: 100px; min-width: 100px; }
-    th:nth-child(12), td:nth-child(12) { width: 4%; }
-    th:nth-child(13), td:nth-child(13) { width: 4%; }
-    th:nth-child(7), th:nth-child(8), th:nth-child(9), th:nth-child(10), th:nth-child(11) { text-align: center; }
+    th:nth-child(7), td:nth-child(7) { width: 100px; min-width: 100px; text-align: center; }
+    th:nth-child(8), td:nth-child(8) { width: 5%; }
+    th:nth-child(9), td:nth-child(9) { width: 200px; min-width: 200px; }
+    th:nth-child(10), td:nth-child(10) { width: 200px; min-width: 200px; }
+    th:nth-child(11), td:nth-child(11) { width: 100px; min-width: 100px; text-align: center; }
+    th:nth-child(12), td:nth-child(12) { width: 100px; min-width: 100px; text-align: center; }
+    th:nth-child(13), td:nth-child(13) { width: 100px; min-width: 100px; }
+    th:nth-child(14), td:nth-child(14) { width: 4%; }
+    th:nth-child(15), td:nth-child(15) { width: 4%; }
+    th:nth-child(5), th:nth-child(6), th:nth-child(7), th:nth-child(8), th:nth-child(9), th:nth-child(10), th:nth-child(11), th:nth-child(12), th:nth-child(13) { text-align: center; }
     th:nth-child(4), td:nth-child(4) { text-align: center; }
     th:nth-child(4) .bilingual-label { width: 100%; align-items: center; }
-    th:nth-child(7) .bilingual-label, th:nth-child(8) .bilingual-label, th:nth-child(9) .bilingual-label,
-    th:nth-child(10) .bilingual-label, th:nth-child(11) .bilingual-label {
+    th:nth-child(5) .bilingual-label, th:nth-child(6) .bilingual-label, th:nth-child(7) .bilingual-label,
+    th:nth-child(8) .bilingual-label, th:nth-child(9) .bilingual-label, th:nth-child(10) .bilingual-label,
+    th:nth-child(11) .bilingual-label, th:nth-child(12) .bilingual-label, th:nth-child(13) .bilingual-label {
       width: 100%; align-items: center;
     }
     .action-column, .action-cell { text-align: center; }
     .qr-column, .qr-cell { text-align: center; }
     .qr-cell { white-space: normal; }
     .sds-direct-link { display: inline-flex; align-items: center; justify-content: center; max-width: 100%; min-width: 96px; padding: 6px 5px; font-size: 11px; white-space: normal; text-align: center; text-decoration: none; }
-    td:nth-child(9) .sds-language-btn, td:nth-child(10) .sds-language-btn,
-    td:nth-child(11) .sds-direct-link { display: flex; width: max-content; max-width: 100%; margin: 0 auto; }
+    td:nth-child(11) .sds-language-btn, td:nth-child(12) .sds-language-btn,
+    td:nth-child(13) .sds-direct-link { display: flex; width: max-content; max-width: 100%; margin: 0 auto; }
     .qr-btn { border: 1px solid #a7f3d0; background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #047857; border-radius: 9px; padding: 7px 8px; font-size: 11px; font-weight: 800; display: inline-flex; flex-direction: column; align-items: center; gap: 2px; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
     .qr-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 7px 14px rgba(5, 150, 105, .2); background: #bbf7d0; }
     .qr-btn small { font-size: 9px; font-weight: 600; opacity: .78; }
@@ -758,7 +764,7 @@
       th { white-space: normal; }
       td { white-space: normal; }
       td:nth-child(2) { overflow-wrap: anywhere; }
-      td:nth-child(5), td:nth-child(6) { white-space: nowrap; font-size: 9px; }
+      td:nth-child(6), td:nth-child(8) { white-space: nowrap; font-size: 9px; }
       .sds-link { width: 100%; max-width: 100%; gap: 4px; white-space: normal; align-items: flex-start; overflow-wrap: anywhere; }
       .sds-link .chemical-name { overflow-wrap: anywhere; }
       .chemical-hazard-icon { flex: 0 0 19px; font-size: 18px; text-align: center; }
@@ -922,7 +928,7 @@
     <div class="table-wrapper">
       <table id="sdsMainTable">
         <colgroup id="sdsTableColgroup">
-          <col data-column-index="1"><col data-column-index="2"><col data-column-index="3"><col data-column-index="4"><col data-column-index="5"><col data-column-index="6"><col data-column-index="7"><col data-column-index="8"><col data-column-index="9"><col data-column-index="10"><col data-column-index="11"><col data-column-index="12"><col data-column-index="13">
+          <col data-column-index="1"><col data-column-index="2"><col data-column-index="3"><col data-column-index="4"><col data-column-index="5"><col data-column-index="6"><col data-column-index="7"><col data-column-index="8"><col data-column-index="9"><col data-column-index="10"><col data-column-index="11"><col data-column-index="12"><col data-column-index="13"><col data-column-index="14"><col data-column-index="15">
         </colgroup>
         <thead>
           <tr>
@@ -930,7 +936,9 @@
             <th><span class="bilingual-label">กลุ่ม<small>Group</small></span></th>
             <th><span class="bilingual-label">สารเคมี<small>Chemical</small></span></th>
             <th><span class="bilingual-label">สัญลักษณ์ความอันตราย<small>Pictogram</small></span></th>
+            <th><span class="bilingual-label">องค์ประกอบ<small>Composition</small></span></th>
             <th><span class="bilingual-label">เลข CAS<small>CAS No.</small></span></th>
+            <th><span class="bilingual-label">อัตราส่วน (%)<small>Concentration (%)</small></span></th>
             <th><span class="bilingual-label">จุดวาบไฟ<small>Flash Point (°C)</small></span></th>
             <th><span class="bilingual-label">มาตรการปฐมพยาบาล<small>First aid measures</small></span></th>
             <th><span class="bilingual-label">มาตรการดับเพลิง<small>Firefighting measures</small></span></th>
@@ -18152,21 +18160,24 @@
   let hazardSettingsDraft = [];
   let newHazardIconId = "sparkle";
 
-  const COLUMN_WIDTH_SETTINGS_KEY = "sdsTableColumnWidthsV1";
+  const COLUMN_WIDTH_SETTINGS_KEY = "sdsTableColumnWidthsV2";
+  const LEGACY_COLUMN_WIDTH_SETTINGS_KEY = "sdsTableColumnWidthsV1";
   const COLUMN_WIDTH_COLUMNS = [
     { index: 1, thai: "ลำดับ", english: "No.", min: 55, max: 180, fallback: 70 },
     { index: 2, thai: "กลุ่ม", english: "Group", min: 75, max: 220, fallback: 100 },
     { index: 3, thai: "สารเคมี", english: "Chemical", min: 130, max: 380, fallback: 180 },
     { index: 4, thai: "สัญลักษณ์ความอันตราย", english: "Pictogram", min: 150, max: 340, fallback: 200 },
-    { index: 5, thai: "เลข CAS", english: "CAS No.", min: 80, max: 220, fallback: 100 },
-    { index: 6, thai: "จุดวาบไฟ", english: "Flash Point", min: 90, max: 220, fallback: 100 },
-    { index: 7, thai: "มาตรการปฐมพยาบาล", english: "First aid", min: 140, max: 420, fallback: 200 },
-    { index: 8, thai: "มาตรการดับเพลิง", english: "Firefighting", min: 140, max: 420, fallback: 200 },
-    { index: 9, thai: "SDS ภาษาไทย", english: "Thai SDS", min: 85, max: 220, fallback: 100 },
-    { index: 10, thai: "SDS ภาษาอังกฤษ", english: "English SDS", min: 85, max: 220, fallback: 100 },
-    { index: 11, thai: "เอกสาร PDF", english: "PDF / Link", min: 85, max: 240, fallback: 100 },
-    { index: 12, thai: "แก้ไข", english: "Edit", min: 55, max: 160, fallback: 70 },
-    { index: 13, thai: "ลบ", english: "Delete", min: 55, max: 160, fallback: 70 }
+    { index: 5, thai: "องค์ประกอบ", english: "Composition", min: 130, max: 380, fallback: 180 },
+    { index: 6, thai: "เลข CAS", english: "CAS No.", min: 80, max: 220, fallback: 100 },
+    { index: 7, thai: "อัตราส่วน (%)", english: "Concentration (%)", min: 85, max: 220, fallback: 100 },
+    { index: 8, thai: "จุดวาบไฟ", english: "Flash Point", min: 90, max: 220, fallback: 100 },
+    { index: 9, thai: "มาตรการปฐมพยาบาล", english: "First aid", min: 140, max: 420, fallback: 200 },
+    { index: 10, thai: "มาตรการดับเพลิง", english: "Firefighting", min: 140, max: 420, fallback: 200 },
+    { index: 11, thai: "SDS ภาษาไทย", english: "Thai SDS", min: 85, max: 220, fallback: 100 },
+    { index: 12, thai: "SDS ภาษาอังกฤษ", english: "English SDS", min: 85, max: 220, fallback: 100 },
+    { index: 13, thai: "เอกสาร PDF", english: "PDF / Link", min: 85, max: 240, fallback: 100 },
+    { index: 14, thai: "แก้ไข", english: "Edit", min: 55, max: 160, fallback: 70 },
+    { index: 15, thai: "ลบ", english: "Delete", min: 55, max: 160, fallback: 70 }
   ];
   let columnWidthDraft = {};
   let columnWidthDrag = null;
@@ -18175,10 +18186,25 @@
     return Math.round(Math.min(column.max, Math.max(column.min, Number(value) || column.fallback)));
   }
 
+  function migrateLegacyColumnWidths(widths) {
+    if (!widths || typeof widths !== "object" || Array.isArray(widths)) return {};
+    if (Object.prototype.hasOwnProperty.call(widths, "14") || Object.prototype.hasOwnProperty.call(widths, "15")) {
+      return widths;
+    }
+    return {
+      1: widths[1], 2: widths[2], 3: widths[3], 4: widths[4],
+      6: widths[5], 8: widths[6], 9: widths[7], 10: widths[8],
+      11: widths[9], 12: widths[10], 13: widths[11],
+      14: widths[12], 15: widths[13]
+    };
+  }
+
   function readSavedColumnWidths() {
     try {
-      const saved = JSON.parse(localStorage.getItem(COLUMN_WIDTH_SETTINGS_KEY) || "null");
-      return saved && typeof saved === "object" ? saved : {};
+      const current = JSON.parse(localStorage.getItem(COLUMN_WIDTH_SETTINGS_KEY) || "null");
+      if (current && typeof current === "object") return current;
+      const legacy = JSON.parse(localStorage.getItem(LEGACY_COLUMN_WIDTH_SETTINGS_KEY) || "null");
+      return migrateLegacyColumnWidths(legacy);
     } catch (error) {
       return {};
     }
@@ -18485,7 +18511,7 @@
     if (filtered.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="13"><div class="empty-state"><span class="bilingual-label">ไม่พบข้อมูล SDS<small>No SDS data found</small></span></div></td>
+          <td colspan="15"><div class="empty-state"><span class="bilingual-label">ไม่พบข้อมูล SDS<small>No SDS data found</small></span></div></td>
         </tr>`;
       return;
     }
@@ -18500,7 +18526,9 @@
             </button>
           </td>
           <td>${pictogramCellMarkup(item)}</td>
-           <td>${bilingualDataMarkup(item.cas || "-")}</td>
+          <td class="detail-cell">${bilingualDataMarkup(compositionText(item))}</td>
+          <td>${bilingualDataMarkup(item.cas || "-")}</td>
+          <td class="detail-cell ratio-cell">${bilingualDataMarkup(item.ratio || item.concentration || item.percentage || "-")}</td>
           <td class="detail-cell">${flashPointMarkup(item)}</td>
           <td class="detail-cell">${measureListMarkup(item.firstAidMeasures, "firstAid")}</td>
           <td class="detail-cell">${measureListMarkup(item.firefightingMeasures, "firefighting")}</td>
@@ -18558,7 +18586,7 @@
       return `${item.thai || ""} / ${item.english || ""}${detail ? `: ${detail}` : ""}`;
     }).join(" | ");
     const rows = [
-      ["ลำดับ / No.", "กลุ่ม / Group", "สารเคมี ภาษาไทย / Chemical (Thai)", "สารเคมี ภาษาอังกฤษ / Chemical (English)", "เลข CAS / CAS Number", "สัญลักษณ์ความอันตราย / Pictogram", "จุดวาบไฟ / Flash Point", "มาตรการปฐมพยาบาล / First aid measures", "มาตรการดับเพลิง / Firefighting measures", "SDS ภาษาไทย / Thai SDS", "SDS ภาษาอังกฤษ / English SDS", "ลิงก์ข้อมูล SDS / SDS Link"],
+      ["ลำดับ / No.", "กลุ่ม / Group", "สารเคมี ภาษาไทย / Chemical (Thai)", "สารเคมี ภาษาอังกฤษ / Chemical (English)", "สัญลักษณ์ความอันตราย / Pictogram", "องค์ประกอบ / Composition", "เลข CAS / CAS Number", "อัตราส่วน (%) / Concentration (%)", "จุดวาบไฟ / Flash Point", "มาตรการปฐมพยาบาล / First aid measures", "มาตรการดับเพลิง / Firefighting measures", "SDS ภาษาไทย / Thai SDS", "SDS ภาษาอังกฤษ / English SDS", "ลิงก์ข้อมูล SDS / SDS Link"],
      ...sdsData.map(item => {
         const thaiAvailable = Boolean(item.thaiPdfUrl || item.thaiSdsUrl || item.thaiPdfFileId || item.thaiSdsFileId);
         const englishAvailable = Boolean(item.englishPdfUrl || item.englishSdsUrl || item.pdfUrl || item.englishPdfFileId || item.englishSdsFileId || item.pdfFileId);
@@ -18569,7 +18597,8 @@
         }).join(" | ");
         const names = chemicalNameFields(item);
         return [
-          item.sequence || "", item.group || "", names.chemicalThai, names.chemicalEnglish, item.cas, hazards,
+          item.sequence || "", item.group || "", names.chemicalThai, names.chemicalEnglish, hazards,
+          compositionText(item), item.cas, item.ratio || item.concentration || item.percentage || "",
           formatFlashPointValue(item.flashPoint), formatMeasures(item.firstAidMeasures), formatMeasures(item.firefightingMeasures),
           thaiAvailable ? "มี / Available" : "",
           englishAvailable ? "มี / Available" : "",
@@ -18745,6 +18774,7 @@
 
     function normalizeSharedColumnWidths(widths) {
       if (!widths || typeof widths !== "object" || Array.isArray(widths)) return {};
+      widths = migrateLegacyColumnWidths(widths);
       var normalized = {};
       COLUMN_WIDTH_COLUMNS.forEach(function (column) {
         if (widths[column.index] === undefined || widths[column.index] === null || widths[column.index] === "") return;
