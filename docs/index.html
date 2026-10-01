@@ -17946,26 +17946,19 @@
     openDrawer();
   }
 
+  // The password is checked by the Apps Script backend only; it is never
+  // stored in this public page.
   function getDeletePassword() {
     const password = window.prompt("กรุณาใส่รหัสก่อนลบข้อมูล / Enter delete password");
-    if (password === null) return null;
-    if (password !== "121314") {
-      window.alert("รหัสไม่ถูกต้อง ข้อมูลยังไม่ถูกลบ / Incorrect password. Nothing was deleted.");
-      return null;
-    }
-    return password;
+    if (password === null || !password.trim()) return null;
+    return password.trim();
   }
 
   // Editing an existing record uses the same shared password as deletion.
-  // The Apps Script backend re-checks it, so the prompt is not the only guard.
   function getEditPassword() {
     const password = window.prompt("กรุณาใส่รหัสก่อนแก้ไขข้อมูล / Enter edit password");
-    if (password === null) return null;
-    if (password !== "121314") {
-      window.alert("รหัสไม่ถูกต้อง ไม่สามารถแก้ไขข้อมูลได้ / Incorrect password. Editing is not allowed.");
-      return null;
-    }
-    return password;
+    if (password === null || !password.trim()) return null;
+    return password.trim();
   }
 
   async function deleteSDS(id) {
@@ -19628,10 +19621,29 @@
       }
     };
 
-    window.editSDS = function (id) {
+    function verifyActionPassword(password) {
+      if (isAppsScript) {
+        return new Promise(function (resolve, reject) {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .verifyActionPassword(password);
+        });
+      }
+      return postRemote({ action: "verifyPassword", password: password });
+    }
+
+    window.editSDS = async function (id) {
+      if (!isAppsScript && !isRemote) return baseEdit(id);
       if (publicReadOnly) return;
       var password = getEditPassword();
       if (!password) return;
+      try {
+        await verifyActionPassword(password);
+      } catch (error) {
+        alert(error && error.message ? error.message : "รหัสไม่ถูกต้อง / Incorrect password.");
+        return;
+      }
       window.sdsEditPassword = password;
       return baseEdit(id);
     };
