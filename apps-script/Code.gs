@@ -23,7 +23,9 @@ var DELETE_PASSWORD = "121314";
 // The public GitHub dashboard is intentionally allowed to create new SDS
 // records. Existing records and destructive actions remain administrator-only.
 // Keep this switch explicit so the public-write policy is easy to audit.
-var PUBLIC_SDS_CREATE_ENABLED = true;
+// Public users may add and update SDS records from the dashboard. Deletion
+// remains administrator-only and still requires the delete password.
+var PUBLIC_SDS_WRITE_ENABLED = true;
 
 // Shared UI settings are stored in Script Properties so every viewer of the
 // public dashboard receives the same table layout. This setting contains only
@@ -341,11 +343,8 @@ function saveSds(record, fileData) {
     var sheet = getSheet_();
     var requestedId = clean_(record && record.id);
     var existing = findRowById_(sheet, requestedId);
-    if (existing && !isAdmin_()) {
-      throw new Error("แก้ไขข้อมูลเดิมต้องเปิด Apps Script ด้วยบัญชีผู้ดูแลระบบ / Updating an existing SDS requires an administrator account");
-    }
-    if (!existing && !PUBLIC_SDS_CREATE_ENABLED && !isAdmin_()) {
-      throw new Error("ยังไม่เปิดให้ผู้ใช้ทั่วไปเพิ่มข้อมูล SDS / Public SDS creation is disabled");
+    if (!PUBLIC_SDS_WRITE_ENABLED && !isAdmin_()) {
+      throw new Error("ยังไม่เปิดให้ผู้ใช้ทั่วไปบันทึกข้อมูล SDS / Public SDS writing is disabled");
     }
     var normalized = normalizeRecord_(record);
     existing = existing || findRowById_(sheet, normalized.id);
