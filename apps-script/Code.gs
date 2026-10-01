@@ -16,9 +16,14 @@ var SDS_HEADERS = [
   "sequence", "group", "responsibleParty", "recorder", "dateOfUse", "registerSds", "components"
 ];
 
-// Destructive actions require a second confirmation in the dashboard and
-// this server-side check protects the API even if the browser is bypassed.
-var DELETE_PASSWORD = "121314";
+// Editing and deleting SDS records require a shared password. It is stored
+// only in Script Properties (Project Settings > Script properties >
+// SDS_ACTION_PASSWORD) so it never appears in this public source code.
+// Repeated wrong attempts temporarily lock the check to slow down guessing.
+var ACTION_PASSWORD_PROPERTY = "SDS_ACTION_PASSWORD";
+var PASSWORD_FAIL_CACHE_KEY = "SDS_PASSWORD_FAILURES";
+var PASSWORD_MAX_FAILURES = 10;
+var PASSWORD_LOCK_SECONDS = 900;
 
 // The public GitHub dashboard is intentionally allowed to create and update
 // SDS records. Deletion is also allowed when the shared delete password is
@@ -104,6 +109,8 @@ function doPost(e) {
       result = saveSds(payload.record || {}, payload.file || null, payload.password);
     } else if (action === "delete") {
       result = deleteSds(payload.id, payload.password);
+    } else if (action === "verifyPassword") {
+      result = verifyActionPassword(payload.password);
     } else if (action === "saveColumnWidths") {
       result = saveColumnWidths_(payload.columnWidths);
     } else if (action === "saveColumnVisibility") {
@@ -486,8 +493,8 @@ function saveSds(record, fileData, password) {
     existing = existing || findRowById_(sheet, normalized.id);
     // Updating an existing record requires the shared password (same as
     // deletion); creating a new record does not. Administrators are exempt.
-    if (existing && String(password || "") !== DELETE_PASSWORD && !isAdmin_()) {
-      throw new Error("รหัสแก้ไขไม่ถูกต้อง / Invalid edit password.");
+    if (existing && !isAdmin_()) {
+      assertActionPassword_(password);
     }
     var oldRow = existing ? sheet.getRange(existing, 1, 1, SDS_HEADERS.length).getValues()[0] : null;
     var pdfFileId = oldRow ? String(oldRow[9] || "") : "";
@@ -578,9 +585,7 @@ function saveSds(record, fileData, password) {
 }
 
 function deleteSds(id, password) {
-  if (String(password || "") !== DELETE_PASSWORD) {
-    throw new Error("รหัสลบไม่ถูกต้อง / Invalid delete password.");
-  }
+  assertActionPassword_(password);
   if (!PUBLIC_SDS_WRITE_ENABLED && !isAdmin_()) {
     throw new Error("ไม่มีสิทธิ์แก้ไขข้อมูล กรุณาเปิด Apps Script ด้วยบัญชีผู้ดูแลระบบ");
   }
@@ -808,6 +813,30 @@ function formatDateValue_(value) {
     return Utilities.formatDate(value, Session.getScriptTimeZone(), "yyyy-MM-dd");
   }
   return String(value);
+}
+
+function verifyActionPassword(password) {
+  assertActionPassword_(password);
+  return { valid: true };
+}
+
+function assertActionPassword_(password) {
+  var expected = PropertiesService.getScriptProperties().getProperty(ACTION_PASSWORD_PROPERTY) || "";
+  if (!expected) {
+    throw new Error("ยังไม่ได้ตั้งรหัสใน Script Properties (" + ACTION_PASSWORD_PROPERTY + ") / Action password is not configured.");
+  }
+
+  var cache = CacheService.getScriptCache();
+  var failures = Number(cache.get(PASSWORD_FAIL_CACHE_KEY) || 0);
+  if (failures >= PASSWORD_MAX_FAILURES) {
+    throw new Error("ใส่รหัสผิดหลายครั้งเกินไป กรุณารอ 15 นาที / Too many wrong attempts. Try again in 15 minutes.");
+  }
+
+  if (String(password || "") !== expected) {
+    cache.put(PASSWORD_FAIL_CACHE_KEY, String(failures + 1), PASSWORD_LOCK_SECONDS);
+    Utilities.sleep(1000);
+    throw new Error("รหัสไม่ถูกต้อง / Incorrect password.");
+  }
 }
 
 function assertAdmin_() {
