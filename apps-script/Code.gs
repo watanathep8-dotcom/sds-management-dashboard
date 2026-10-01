@@ -20,11 +20,9 @@ var SDS_HEADERS = [
 // this server-side check protects the API even if the browser is bypassed.
 var DELETE_PASSWORD = "121314";
 
-// The public GitHub dashboard is intentionally allowed to create new SDS
-// records. Existing records and destructive actions remain administrator-only.
-// Keep this switch explicit so the public-write policy is easy to audit.
-// Public users may add and update SDS records from the dashboard. Deletion
-// remains administrator-only and still requires the delete password.
+// The public GitHub dashboard is intentionally allowed to create and update
+// SDS records. Deletion is also allowed when the shared delete password is
+// supplied; the explicit switch keeps this public-write policy easy to audit.
 var PUBLIC_SDS_WRITE_ENABLED = true;
 
 // Shared UI settings are stored in Script Properties so every viewer of the
@@ -438,18 +436,21 @@ function saveSds(record, fileData) {
 }
 
 function deleteSds(id, password) {
-  assertAdmin_();
   if (String(password || "") !== DELETE_PASSWORD) {
     throw new Error("รหัสลบไม่ถูกต้อง / Invalid delete password.");
+  }
+  if (!PUBLIC_SDS_WRITE_ENABLED && !isAdmin_()) {
+    throw new Error("ไม่มีสิทธิ์แก้ไขข้อมูล กรุณาเปิด Apps Script ด้วยบัญชีผู้ดูแลระบบ");
   }
   var sheet = getSheet_();
   var rowNumber = findRowById_(sheet, id);
   if (!rowNumber) return { deleted: false };
 
   var row = sheet.getRange(rowNumber, 1, 1, SDS_HEADERS.length).getValues()[0];
-  if (row[9]) {
-    try { DriveApp.getFileById(String(row[9])).setTrashed(true); } catch (ignored) {}
-  }
+  var fileIds = [row[9], row[20], row[22]].map(function(value) { return String(value || "").trim(); });
+  fileIds.filter(function(fileId, index) { return fileId && fileIds.indexOf(fileId) === index; }).forEach(function(fileId) {
+    try { DriveApp.getFileById(fileId).setTrashed(true); } catch (ignored) {}
+  });
   sheet.deleteRow(rowNumber);
   return { deleted: true };
 }
