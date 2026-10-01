@@ -358,7 +358,7 @@
     .action-column, .action-cell { text-align: center; }
     .qr-column, .qr-cell { text-align: center; }
     .qr-cell { white-space: normal; }
-    .sds-direct-link { display: inline-flex; align-items: center; justify-content: center; max-width: 100%; min-width: 124px; padding: 7px 8px; white-space: normal; text-align: center; text-decoration: none; }
+    .sds-direct-link { display: inline-flex; align-items: center; justify-content: center; max-width: 100%; min-width: 96px; padding: 6px 5px; font-size: 11px; white-space: normal; text-align: center; text-decoration: none; }
     td:nth-child(9) .sds-language-btn, td:nth-child(10) .sds-language-btn,
     td:nth-child(11) .sds-direct-link { display: flex; width: max-content; max-width: 100%; margin: 0 auto; }
     .qr-btn { border: 1px solid #a7f3d0; background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #047857; border-radius: 9px; padding: 7px 8px; font-size: 11px; font-weight: 800; display: inline-flex; flex-direction: column; align-items: center; gap: 2px; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
@@ -18508,7 +18508,7 @@
          <td>${languageSdsCell(item, "English")}</td>
           <td class="qr-cell">
             <a class="pdf-btn sds-direct-link" title="เปิดข้อมูล SDS" href="${escapeHTML(publicSdsUrl(item))}" target="_blank" rel="noopener">
-              <span class="bilingual-label">📄 เปิดข้อมูล SDS<small>Open SDS link</small></span>
+              <span class="bilingual-label">📄 เปิด SDS<small>Open SDS</small></span>
             </a>
           </td>
          <td class="action-cell">
