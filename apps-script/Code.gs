@@ -30,6 +30,12 @@ var PUBLIC_SDS_WRITE_ENABLED = true;
 // validated column widths; it does not contain SDS records or credentials.
 var COLUMN_WIDTHS_PROPERTY = "SDS_TABLE_COLUMN_WIDTHS_V1";
 var COLUMN_VISIBILITY_PROPERTY = "SDS_TABLE_COLUMN_VISIBILITY_V1";
+// Hazard/pictogram definitions edited from the dashboard Settings dialog.
+// Only names, aliases, icon ids and asset paths are stored (no uploads), so
+// the JSON fits comfortably inside a single Script Property value.
+var HAZARD_DEFINITIONS_PROPERTY = "SDS_HAZARD_DEFINITIONS_V1";
+var HAZARD_DEFINITIONS_MAX_ITEMS = 60;
+var HAZARD_DEFINITIONS_MAX_BYTES = 8500;
 var TABLE_COLUMN_INDICES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 var COLUMN_WIDTH_LIMITS = {
   "1": { min: 55, max: 180, fallback: 70 },
@@ -77,6 +83,10 @@ function doGet(e) {
     return jsonResponse_({ ok: true, data: getColumnVisibility_() }, params.callback);
   }
 
+  if (params.action === "hazardDefinitions") {
+    return jsonResponse_({ ok: true, data: getHazardDefinitions_() }, params.callback);
+  }
+
   return HtmlService.createTemplateFromFile("Index")
     .evaluate()
     .setTitle("ระบบจัดการ SDS | SDS Management")
@@ -98,6 +108,8 @@ function doPost(e) {
       result = saveColumnWidths_(payload.columnWidths);
     } else if (action === "saveColumnVisibility") {
       result = saveColumnVisibility_(payload.columnVisibility);
+    } else if (action === "saveHazardDefinitions") {
+      result = saveHazardDefinitions_(payload.hazardDefinitions);
     } else {
       throw new Error("ไม่รองรับคำสั่งนี้ / Unsupported action.");
     }
@@ -203,6 +215,72 @@ function saveColumnVisibility_(visibility) {
 
 function saveColumnVisibility(visibility) {
   return saveColumnVisibility_(visibility);
+}
+
+function getHazardDefinitions_() {
+  var raw = PropertiesService.getScriptProperties().getProperty(HAZARD_DEFINITIONS_PROPERTY);
+  if (!raw) return [];
+  try {
+    var saved = JSON.parse(raw);
+    return Array.isArray(saved) ? saved : [];
+  } catch (ignored) {
+    return [];
+  }
+}
+
+function getHazardDefinitions() {
+  return getHazardDefinitions_();
+}
+
+function saveHazardDefinitions_(definitions) {
+  if (!Array.isArray(definitions) || !definitions.length) {
+    throw new Error("รูปแบบค่า Hazard ไม่ถูกต้อง / Invalid hazard settings.");
+  }
+  if (definitions.length > HAZARD_DEFINITIONS_MAX_ITEMS) {
+    throw new Error("จำนวน Hazard มากเกินไป / Too many hazard definitions.");
+  }
+
+  var text = function(value, max) {
+    return String(value === undefined || value === null ? "" : value).trim().slice(0, max);
+  };
+  var used = {};
+  var normalized = [];
+  definitions.forEach(function(item) {
+    if (!item || typeof item !== "object") return;
+    var name = text(item.name, 120);
+    var key = name.toLowerCase();
+    if (!name || used[key]) return;
+    used[key] = true;
+    var image = text(item.image, 300);
+    normalized.push({
+      id: text(item.id, 80),
+      name: name,
+      aliases: (Array.isArray(item.aliases) ? item.aliases : [])
+        .map(function(alias) { return text(alias, 120); })
+        .filter(String)
+        .slice(0, 20),
+      iconId: text(item.iconId, 40),
+      icon: text(item.icon, 16),
+      // Only asset paths or https URLs; data: URLs would overflow the property.
+      image: /^(assets\/|https:\/\/)/.test(image) ? image : "",
+      className: text(item.className, 80)
+    });
+  });
+
+  if (!normalized.length) {
+    throw new Error("ต้องมี Hazard อย่างน้อย 1 รายการ / At least one hazard is required.");
+  }
+  var json = JSON.stringify(normalized);
+  if (Utilities.newBlob(json).getBytes().length > HAZARD_DEFINITIONS_MAX_BYTES) {
+    throw new Error("ข้อมูล Hazard ยาวเกินกว่าที่บันทึกได้ / Hazard settings are too large to store.");
+  }
+
+  PropertiesService.getScriptProperties().setProperty(HAZARD_DEFINITIONS_PROPERTY, json);
+  return normalized;
+}
+
+function saveHazardDefinitions(definitions) {
+  return saveHazardDefinitions_(definitions);
 }
 
 function normalizeColumnWidth_(value, limit) {

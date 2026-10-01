@@ -18635,6 +18635,12 @@
     saveLocal();
     closeHazardSettings();
     refreshDashboard();
+    if (typeof window.saveSharedHazardDefinitions === "function") {
+      Promise.resolve(window.saveSharedHazardDefinitions(hazardDefinitions)).catch(error => {
+        console.error("Shared hazard settings save failed", error);
+        alert("บันทึกการตั้งค่า Hazard ไว้เฉพาะเครื่องนี้ เนื่องจากบันทึกค่ากลางไม่สำเร็จ");
+      });
+    }
   }
 
   function renderTable() {
@@ -19097,6 +19103,82 @@
       return Promise.resolve(normalized);
     };
 
+    function applySharedHazardDefinitions(definitions) {
+      if (!Array.isArray(definitions) || !definitions.length) return false;
+      localStorage.setItem(HAZARD_SETTINGS_KEY, JSON.stringify(definitions));
+      hazardDefinitions = loadHazardDefinitions();
+      return true;
+    }
+
+    function loadSharedHazardDefinitions() {
+      if (isAppsScript) {
+        return new Promise(function (resolve, reject) {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .getHazardDefinitions();
+        });
+      }
+
+      if (isRemote) {
+        var settingsUrl = new URL(apiUrl, window.location.href);
+        settingsUrl.searchParams.set("action", "hazardDefinitions");
+        settingsUrl.searchParams.set("_", String(Date.now()));
+        return fetch(settingsUrl.toString(), {
+          method: "GET",
+          mode: "cors",
+          credentials: "omit",
+          cache: "no-store"
+        }).then(function (response) {
+          if (!response.ok) throw new Error("Apps Script hazard settings HTTP " + response.status);
+          return response.json();
+        }).then(function (response) {
+          if (!response || response.ok === false) throw new Error(response && response.error || "Hazard settings API error");
+          return response.data || [];
+        });
+      }
+
+      return Promise.resolve(null);
+    }
+
+    function loadSharedHazardDefinitionsSafely() {
+      return loadSharedHazardDefinitions().catch(function (error) {
+        console.warn("Shared hazard settings unavailable; using local fallback", error);
+        return null;
+      });
+    }
+
+    window.saveSharedHazardDefinitions = function (definitions) {
+      if (!Array.isArray(definitions) || !definitions.length) return Promise.resolve(null);
+
+      if (isAppsScript) {
+        return new Promise(function (resolve, reject) {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .saveHazardDefinitions(definitions);
+        });
+      }
+
+      if (isRemote) {
+        return fetch(apiUrl, {
+          method: "POST",
+          mode: "cors",
+          credentials: "omit",
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
+          body: JSON.stringify({ action: "saveHazardDefinitions", hazardDefinitions: definitions })
+        }).then(function (response) {
+          if (!response.ok) throw new Error("Apps Script hazard settings save HTTP " + response.status);
+          return response.json();
+        }).then(function (response) {
+          if (!response || response.ok === false) throw new Error(response && response.error || "บันทึกการตั้งค่า Hazard ส่วนกลางไม่สำเร็จ");
+          return response.data;
+        });
+      }
+
+      return Promise.resolve(definitions);
+    };
+
     function loadSharedColumnWidthsSafely() {
       return loadSharedColumnWidths().catch(function (error) {
         console.warn("Shared column widths unavailable; using local fallback", error);
@@ -19367,8 +19449,10 @@
           .withFailureHandler(reject)
           .listSds();
       });
-      Promise.all([rowsPromise, loadSharedColumnWidthsSafely(), loadSharedColumnVisibilitySafely()])
+      Promise.all([rowsPromise, loadSharedColumnWidthsSafely(), loadSharedColumnVisibilitySafely(), loadSharedHazardDefinitionsSafely()])
         .then(function (results) {
+          // Hazard definitions first so rows are normalized and rendered with them.
+          applySharedHazardDefinitions(results[3]);
           applyData(results[0]);
           if (results[1]) applySharedColumnWidths(results[1]);
           if (results[2]) applySharedColumnVisibility(results[2]);
@@ -19402,8 +19486,10 @@
           if (!response || response.ok === false) throw new Error(response && response.error || "API error");
           return response;
         });
-      return Promise.all([dataPromise, loadSharedColumnWidthsSafely(), loadSharedColumnVisibilitySafely()])
+      return Promise.all([dataPromise, loadSharedColumnWidthsSafely(), loadSharedColumnVisibilitySafely(), loadSharedHazardDefinitionsSafely()])
         .then(function (results) {
+          // Hazard definitions first so rows are normalized and rendered with them.
+          applySharedHazardDefinitions(results[3]);
           applyData(results[0].data || []);
           if (results[1]) applySharedColumnWidths(results[1]);
           if (results[2]) applySharedColumnVisibility(results[2]);
