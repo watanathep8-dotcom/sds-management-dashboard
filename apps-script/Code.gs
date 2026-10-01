@@ -20,6 +20,11 @@ var SDS_HEADERS = [
 // this server-side check protects the API even if the browser is bypassed.
 var DELETE_PASSWORD = "121314";
 
+// The public GitHub dashboard is intentionally allowed to create new SDS
+// records. Existing records and destructive actions remain administrator-only.
+// Keep this switch explicit so the public-write policy is easy to audit.
+var PUBLIC_SDS_CREATE_ENABLED = true;
+
 // Shared UI settings are stored in Script Properties so every viewer of the
 // public dashboard receives the same table layout. This setting contains only
 // validated column widths; it does not contain SDS records or credentials.
@@ -39,7 +44,8 @@ var COLUMN_WIDTH_LIMITS = {
   "13": { min: 55, max: 160, fallback: 70 }
 };
 
-// New installations start empty. SDS records are added by the administrator.
+// New installations start empty. SDS records may be submitted from the public
+// dashboard; edits and deletes still require an administrator session.
 var SAMPLE_ROWS = [];
 
 function doGet(e) {
@@ -323,14 +329,21 @@ function getSdsFile(fileId) {
 }
 
 function saveSds(record, fileData) {
-  assertAdmin_();
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
   try {
     var sheet = getSheet_();
+    var requestedId = clean_(record && record.id);
+    var existing = findRowById_(sheet, requestedId);
+    if (existing && !isAdmin_()) {
+      throw new Error("แก้ไขข้อมูลเดิมต้องเปิด Apps Script ด้วยบัญชีผู้ดูแลระบบ / Updating an existing SDS requires an administrator account");
+    }
+    if (!existing && !PUBLIC_SDS_CREATE_ENABLED && !isAdmin_()) {
+      throw new Error("ยังไม่เปิดให้ผู้ใช้ทั่วไปเพิ่มข้อมูล SDS / Public SDS creation is disabled");
+    }
     var normalized = normalizeRecord_(record);
-    var existing = findRowById_(sheet, normalized.id);
+    existing = existing || findRowById_(sheet, normalized.id);
     var oldRow = existing ? sheet.getRange(existing, 1, 1, SDS_HEADERS.length).getValues()[0] : null;
     var pdfFileId = oldRow ? String(oldRow[9] || "") : "";
     var pdfName = oldRow ? String(oldRow[10] || "") : "";
@@ -611,12 +624,16 @@ function formatDateValue_(value) {
 }
 
 function assertAdmin_() {
+  if (!isAdmin_()) {
+    throw new Error("ไม่มีสิทธิ์แก้ไขข้อมูล กรุณาเปิด Apps Script ด้วยบัญชีผู้ดูแลระบบ");
+  }
+}
+
+function isAdmin_() {
   var email = String(Session.getActiveUser().getEmail() || "").toLowerCase();
   var configured = PropertiesService.getScriptProperties().getProperty("ADMIN_EMAILS") || "";
   var admins = configured.split(",").map(function(item) { return item.trim().toLowerCase(); }).filter(String);
-  if (!email || admins.indexOf(email) === -1) {
-    throw new Error("ไม่มีสิทธิ์แก้ไขข้อมูล กรุณาเปิด Apps Script ด้วยบัญชีผู้ดูแลระบบ");
-  }
+  return Boolean(email && admins.indexOf(email) !== -1);
 }
 
 function jsonResponse_(value, callback) {
