@@ -13,7 +13,7 @@ var SDS_HEADERS = [
   "chemicalThai", "chemicalEnglish", "thaiPdfFileId", "thaiPdfName",
   "englishPdfFileId", "englishPdfName", "pdfUrl", "thaiPdfUrl", "englishPdfUrl",
   "composition", "ratio", "personalProtectiveEquipment", "firstAidMeasures", "firefightingMeasures",
-  "sequence", "group"
+  "sequence", "group", "responsibleParty", "recorder", "dateOfUse", "registerSds", "components"
 ];
 
 // Destructive actions require a second confirmation in the dashboard and
@@ -195,14 +195,14 @@ function setupSystem() {
  */
 function migrateCatalogFromGithub() {
   assertAdmin_();
-  var sourceUrl = "https://raw.githubusercontent.com/mojikenso-sketch/sds-management-dashboard/main/docs/index.html";
+  var sourceUrl = "https://raw.githubusercontent.com/watanathep8-dotcom/sds-management-dashboard/main/docs/index.html";
   var response = UrlFetchApp.fetch(sourceUrl, { muteHttpExceptions: true });
   if (response.getResponseCode() !== 200) {
     throw new Error("โหลด catalog จาก GitHub ไม่สำเร็จ: HTTP " + response.getResponseCode());
   }
 
   var html = response.getContentText();
-  var dataMatch = html.match(/const defaultData = (\[[\s\S]*?\n\]);/);
+  var dataMatch = html.match(/const defaultData\s*=\s*(\[[\s\S]*?\])\s*;/);
   if (!dataMatch) throw new Error("ไม่พบ defaultData ใน GitHub catalog");
   var records = JSON.parse(dataMatch[1]);
 
@@ -248,7 +248,7 @@ function migrateCatalogFromGithub() {
       clean_(seed.revisionDate),
       normalizeStatus_(seed.status),
       clean_(seed.signalWord),
-      (Array.isArray(seed.hazards) ? seed.hazards : []).map(clean_).filter(String).slice(0, 1).join("|"),
+      (Array.isArray(seed.hazards) ? seed.hazards : []).map(clean_).filter(String).join("|"),
       "",
       englishPdfName,
       updatedAt,
@@ -273,7 +273,12 @@ function migrateCatalogFromGithub() {
       serializeMeasures_(seed.firstAidMeasures),
       serializeMeasures_(seed.firefightingMeasures),
       Number(seed.sequence) || "",
-      clean_(seed.group)
+      clean_(seed.group),
+      clean_(seed.responsibleParty),
+      clean_(seed.recorder),
+      clean_(seed.dateOfUse),
+      clean_(seed.registerSds),
+      serializeComponents_(seed.components)
     ];
 
     if (existing[id]) sheet.getRange(existing[id], 1, 1, SDS_HEADERS.length).setValues([row]);
@@ -412,7 +417,12 @@ function saveSds(record, fileData) {
       serializeMeasures_(normalized.firstAidMeasures),
       serializeMeasures_(normalized.firefightingMeasures),
       normalized.sequence,
-      normalized.group
+      normalized.group,
+      normalized.responsibleParty,
+      normalized.recorder,
+      normalized.dateOfUse,
+      normalized.registerSds,
+      serializeComponents_(normalized.components)
     ];
 
     if (existing) {
@@ -477,7 +487,9 @@ function findRowById_(sheet, id) {
 
 function normalizeRecord_(record) {
   var hazards = Array.isArray(record.hazards) ? record.hazards : [];
-  hazards = hazards.map(function(item) { return clean_(item); }).filter(String).slice(0, 1);
+  hazards = hazards.map(function(item) { return clean_(item); }).filter(String).filter(function(item, index, list) {
+    return list.indexOf(item) === index;
+  }).slice(0, 6);
   var thaiSds = record.thaiSds === true || String(record.thaiSds || "").toLowerCase() === "true";
   var language = clean_(record.language);
   if (["English", "Thai"].indexOf(language) === -1) language = thaiSds ? "Thai" : "English";
@@ -509,7 +521,12 @@ function normalizeRecord_(record) {
     firstAidMeasures: normalizeMeasures_(record.firstAidMeasures),
     firefightingMeasures: normalizeMeasures_(record.firefightingMeasures),
     sequence: Number(record.sequence) || "",
-    group: clean_(record.group)
+    group: clean_(record.group),
+    responsibleParty: clean_(record.responsibleParty),
+    recorder: clean_(record.recorder),
+    dateOfUse: clean_(record.dateOfUse),
+    registerSds: clean_(record.registerSds),
+    components: normalizeComponents_(record.components)
   };
 }
 
@@ -563,6 +580,28 @@ function parseMeasures_(value) {
   try { return normalizeMeasures_(JSON.parse(String(value))); } catch (ignored) { return []; }
 }
 
+function normalizeComponents_(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(function(item) {
+    return {
+      composition: clean_(item && item.composition),
+      cas: clean_(item && item.cas),
+      ratio: clean_(item && item.ratio)
+    };
+  }).filter(function(item) {
+    return item.composition || item.cas || item.ratio;
+  });
+}
+
+function serializeComponents_(value) {
+  return JSON.stringify(normalizeComponents_(value));
+}
+
+function parseComponents_(value) {
+  if (!value) return [];
+  try { return normalizeComponents_(JSON.parse(String(value))); } catch (ignored) { return []; }
+}
+
 function rowToObject_(row) {
   var fileId = String(row[9] || "");
   var storedPdfUrl = String(row[24] || "");
@@ -588,7 +627,7 @@ function rowToObject_(row) {
     revisionDate: formatDateValue_(row[5]),
     status: normalizeStatus_(row[6]),
     signalWord: String(row[7] || ""),
-    hazards: String(row[8] || "").split("|").filter(String).slice(0, 1),
+    hazards: String(row[8] || "").split("|").filter(String).slice(0, 6),
     pdfFileId: fileId,
     pdfName: String(row[10] || ""),
     pdfUrl: storedPdfUrl || (fileId ? "https://drive.google.com/file/d/" + encodeURIComponent(fileId) + "/preview" : ""),
@@ -611,7 +650,12 @@ function rowToObject_(row) {
     firstAidMeasures: parseMeasures_(row[30]),
     firefightingMeasures: parseMeasures_(row[31]),
     sequence: Number(row[32]) || "",
-    group: String(row[33] || "")
+    group: String(row[33] || ""),
+    responsibleParty: String(row[34] || ""),
+    recorder: String(row[35] || ""),
+    dateOfUse: String(row[36] || ""),
+    registerSds: String(row[37] || ""),
+    components: parseComponents_(row[38])
   };
 }
 
