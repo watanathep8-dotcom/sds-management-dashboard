@@ -40,6 +40,7 @@ var COLUMN_WIDTH_LIMITS = {
   "6": { min: 90, max: 220, fallback: 100 },
   "7": { min: 140, max: 420, fallback: 200 },
   "8": { min: 140, max: 420, fallback: 200 },
+  "9": { min: 85, max: 220, fallback: 100 },
   "10": { min: 85, max: 220, fallback: 100 },
   "11": { min: 85, max: 240, fallback: 100 },
   "12": { min: 55, max: 160, fallback: 70 },
