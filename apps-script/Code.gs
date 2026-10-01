@@ -29,20 +29,24 @@ var PUBLIC_SDS_WRITE_ENABLED = true;
 // public dashboard receives the same table layout. This setting contains only
 // validated column widths; it does not contain SDS records or credentials.
 var COLUMN_WIDTHS_PROPERTY = "SDS_TABLE_COLUMN_WIDTHS_V1";
+var COLUMN_VISIBILITY_PROPERTY = "SDS_TABLE_COLUMN_VISIBILITY_V1";
+var TABLE_COLUMN_INDICES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 var COLUMN_WIDTH_LIMITS = {
   "1": { min: 55, max: 180, fallback: 70 },
   "2": { min: 75, max: 220, fallback: 100 },
   "3": { min: 130, max: 380, fallback: 180 },
   "4": { min: 150, max: 340, fallback: 200 },
-  "5": { min: 80, max: 220, fallback: 100 },
-  "6": { min: 90, max: 220, fallback: 100 },
-  "7": { min: 140, max: 420, fallback: 200 },
-  "8": { min: 140, max: 420, fallback: 200 },
-  "9": { min: 85, max: 220, fallback: 100 },
-  "10": { min: 85, max: 220, fallback: 100 },
-  "11": { min: 85, max: 240, fallback: 100 },
-  "12": { min: 55, max: 160, fallback: 70 },
-  "13": { min: 55, max: 160, fallback: 70 }
+  "5": { min: 130, max: 380, fallback: 180 },
+  "6": { min: 80, max: 220, fallback: 100 },
+  "7": { min: 85, max: 220, fallback: 100 },
+  "8": { min: 90, max: 220, fallback: 100 },
+  "9": { min: 140, max: 420, fallback: 200 },
+  "10": { min: 140, max: 420, fallback: 200 },
+  "11": { min: 85, max: 220, fallback: 100 },
+  "12": { min: 85, max: 220, fallback: 100 },
+  "13": { min: 85, max: 240, fallback: 100 },
+  "14": { min: 55, max: 160, fallback: 70 },
+  "15": { min: 55, max: 160, fallback: 70 }
 };
 
 // New installations start empty. SDS records may be submitted from the public
@@ -69,6 +73,10 @@ function doGet(e) {
     return jsonResponse_({ ok: true, data: getColumnWidths_() }, params.callback);
   }
 
+  if (params.action === "columnVisibility") {
+    return jsonResponse_({ ok: true, data: getColumnVisibility_() }, params.callback);
+  }
+
   return HtmlService.createTemplateFromFile("Index")
     .evaluate()
     .setTitle("ระบบจัดการ SDS | SDS Management")
@@ -88,6 +96,8 @@ function doPost(e) {
       result = deleteSds(payload.id, payload.password);
     } else if (action === "saveColumnWidths") {
       result = saveColumnWidths_(payload.columnWidths);
+    } else if (action === "saveColumnVisibility") {
+      result = saveColumnVisibility_(payload.columnVisibility);
     } else {
       throw new Error("ไม่รองรับคำสั่งนี้ / Unsupported action.");
     }
@@ -144,6 +154,55 @@ function saveColumnWidths_(widths) {
 
 function saveColumnWidths(widths) {
   return saveColumnWidths_(widths);
+}
+
+function getColumnVisibility_() {
+  var properties = PropertiesService.getScriptProperties();
+  var raw = properties.getProperty(COLUMN_VISIBILITY_PROPERTY);
+  var saved = {};
+  if (raw) {
+    try { saved = JSON.parse(raw) || {}; } catch (ignored) { saved = {}; }
+  }
+
+  var normalized = {};
+  TABLE_COLUMN_INDICES.forEach(function(index) {
+    var value = saved[index];
+    normalized[index] = value !== false && String(value).toLowerCase() !== "false";
+  });
+  return normalized;
+}
+
+function getColumnVisibility() {
+  return getColumnVisibility_();
+}
+
+function saveColumnVisibility_(visibility) {
+  if (!visibility || typeof visibility !== "object" || Array.isArray(visibility)) {
+    throw new Error("รูปแบบค่าการแสดงหัวข้อตารางไม่ถูกต้อง / Invalid table heading settings.");
+  }
+
+  var normalized = {};
+  var visibleCount = 0;
+  TABLE_COLUMN_INDICES.forEach(function(index) {
+    var value = visibility[index];
+    var visible = value === undefined || value === null || value === "" || value === true || String(value).toLowerCase() === "true";
+    normalized[index] = visible;
+    if (visible) visibleCount += 1;
+  });
+
+  if (!visibleCount) {
+    throw new Error("ต้องแสดงอย่างน้อย 1 หัวข้อ / At least one heading must remain visible.");
+  }
+
+  PropertiesService.getScriptProperties().setProperty(
+    COLUMN_VISIBILITY_PROPERTY,
+    JSON.stringify(normalized)
+  );
+  return normalized;
+}
+
+function saveColumnVisibility(visibility) {
+  return saveColumnVisibility_(visibility);
 }
 
 function normalizeColumnWidth_(value, limit) {

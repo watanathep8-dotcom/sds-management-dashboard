@@ -805,7 +805,7 @@
     .settings-add .settings-name-input { margin-bottom: 3px; }
     .settings-footer { justify-content: flex-end; border-top: 1px solid var(--border); border-bottom: 0; background: #fff; }
     .column-width-dialog { width: min(1120px, 100%); }
-    .column-width-settings-trigger { display: none !important; }
+    .column-width-settings-trigger { display: inline-flex !important; }
     .column-width-help { margin-bottom: 14px; color: var(--muted); font-size: 13px; line-height: 1.55; }
     .column-width-viewport { overflow-x: auto; padding: 4px 2px 12px; border: 1px solid #dbe4ef; border-radius: 12px; background: #f8fbff; }
     .column-width-strip { display: flex; align-items: stretch; min-width: max-content; min-height: 118px; padding: 12px; }
@@ -817,6 +817,17 @@
     .column-width-handle::after { content: "⋮"; position: absolute; inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: 8px; height: 42px; border: 1px solid #93c5fd; border-radius: 5px; background: #dbeafe; color: #2563eb; font-size: 17px; line-height: 36px; }
     .column-width-handle:hover::after, .column-width-handle:focus-visible::after { background: #bfdbfe; border-color: #2563eb; outline: none; }
     body.column-width-dragging { cursor: col-resize; user-select: none; }
+    .column-visibility-list { display: grid; gap: 9px; }
+    .column-visibility-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; border: 1px solid #dbe4ef; border-radius: 11px; background: #f8fbff; }
+    .column-visibility-label { min-width: 0; color: #1e3a8a; font-size: 13px; font-weight: 700; }
+    .column-visibility-label small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 500; }
+    .column-visibility-toggle { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px; color: #334155; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .column-visibility-toggle input { width: 18px; height: 18px; accent-color: #2563eb; }
+    @media (max-width: 600px) {
+      .table-toolbar-actions { width: 100%; justify-content: flex-start; }
+      .table-toolbar-actions .settings-btn, .table-toolbar-actions .btn-secondary { flex: 1 1 150px; }
+      .column-visibility-row { align-items: flex-start; }
+    }
   </style>
 </head>
 
@@ -865,6 +876,25 @@
     <div class="settings-footer">
       <button class="btn-secondary" type="button" onclick="closeColumnWidthSettings()"><span class="bilingual-label">ยกเลิก<small>Cancel</small></span></button>
       <button class="btn-primary" type="button" onclick="saveColumnWidthSettings()"><span class="bilingual-label">บันทึก<small>Save</small></span></button>
+    </div>
+  </div>
+</div>
+<div class="settings-modal" id="columnVisibilityModal" hidden onclick="closeColumnVisibilitySettings(event)">
+  <div class="settings-dialog" onclick="event.stopPropagation()">
+    <div class="settings-header">
+      <div>
+        <h3><span class="bilingual-label">☷ ตั้งค่าหัวข้อในตาราง<small>Table headings</small></span></h3>
+        <p>เลือกหัวข้อที่ต้องการแสดงในตาราง แล้วกดบันทึก<br><span class="bilingual-label"><small>Choose the headings to show, then save</small></span></p>
+      </div>
+      <button class="settings-close" type="button" aria-label="ปิดการตั้งค่าหัวข้อ" onclick="closeColumnVisibilitySettings()">×</button>
+    </div>
+    <div class="settings-body">
+      <div class="column-width-help">ค่าที่บันทึกจะใช้ร่วมกันกับผู้ที่เปิดเว็บไซต์ทุกคน / Saved settings are shared with everyone viewing the website.</div>
+      <div class="column-visibility-list" id="columnVisibilityList"></div>
+    </div>
+    <div class="settings-footer">
+      <button class="btn-secondary" type="button" onclick="closeColumnVisibilitySettings()"><span class="bilingual-label">ยกเลิก<small>Cancel</small></span></button>
+      <button class="btn-primary" type="button" onclick="saveColumnVisibilitySettings()"><span class="bilingual-label">บันทึก<small>Save</small></span></button>
     </div>
   </div>
 </div>
@@ -921,6 +951,7 @@
 
       <div class="table-toolbar-actions">
         <button id="columnWidthSettingsButton" class="settings-btn column-width-settings-trigger" type="button" onclick="openColumnWidthSettings()"><span class="bilingual-label">↔ ตั้งค่าความกว้าง<small>Column widths</small></span></button>
+        <button id="columnVisibilitySettingsButton" class="settings-btn" type="button" onclick="openColumnVisibilitySettings()"><span class="bilingual-label">☷ ตั้งค่าหัวข้อ<small>Table headings</small></span></button>
         <button class="btn-secondary export-btn" onclick="exportCSV()"><span class="bilingual-label">↓ ส่งออก CSV<small>Export CSV</small></span></button>
       </div>
     </div>
@@ -18176,6 +18207,7 @@
 
   const COLUMN_WIDTH_SETTINGS_KEY = "sdsTableColumnWidthsV2";
   const LEGACY_COLUMN_WIDTH_SETTINGS_KEY = "sdsTableColumnWidthsV1";
+  const COLUMN_VISIBILITY_SETTINGS_KEY = "sdsTableColumnVisibilityV1";
   const COLUMN_WIDTH_COLUMNS = [
     { index: 1, thai: "ลำดับ", english: "No.", min: 55, max: 180, fallback: 70 },
     { index: 2, thai: "กลุ่ม", english: "Group", min: 75, max: 220, fallback: 100 },
@@ -18195,6 +18227,7 @@
   ];
   let columnWidthDraft = {};
   let columnWidthDrag = null;
+  let columnVisibilityDraft = {};
 
   function clampColumnWidth(value, column) {
     return Math.round(Math.min(column.max, Math.max(column.min, Number(value) || column.fallback)));
@@ -18246,8 +18279,106 @@
       const width = clampColumnWidth(widths[column.index], column);
       col.style.width = `${width}px`;
       col.style.minWidth = `${width}px`;
-      col.style.display = "";
     });
+  }
+
+  function readSavedColumnVisibility() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(COLUMN_VISIBILITY_SETTINGS_KEY) || "null");
+      return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function getColumnVisibilityState() {
+    const saved = readSavedColumnVisibility();
+    const state = {};
+    COLUMN_WIDTH_COLUMNS.forEach(column => {
+      state[column.index] = saved[column.index] !== false && String(saved[column.index]).toLowerCase() !== "false";
+    });
+    return state;
+  }
+
+  function applyColumnVisibility(visibility) {
+    const table = document.getElementById("sdsMainTable");
+    const colgroup = document.getElementById("sdsTableColgroup");
+    if (!table || !colgroup) return;
+    COLUMN_WIDTH_COLUMNS.forEach(column => {
+      const hidden = visibility && visibility[column.index] === false;
+      const col = colgroup.querySelector(`col[data-column-index="${column.index}"]`);
+      if (col) col.style.display = hidden ? "none" : "";
+      table.querySelectorAll(`thead th:nth-child(${column.index}), tbody td:nth-child(${column.index})`).forEach(cell => {
+        cell.style.display = hidden ? "none" : "";
+      });
+    });
+  }
+
+  function renderColumnVisibilityEditor() {
+    const list = document.getElementById("columnVisibilityList");
+    if (!list) return;
+    list.innerHTML = "";
+    COLUMN_WIDTH_COLUMNS.forEach(column => {
+      const row = document.createElement("label");
+      row.className = "column-visibility-row";
+      const text = document.createElement("span");
+      text.className = "column-visibility-label";
+      text.textContent = column.thai;
+      const english = document.createElement("small");
+      english.textContent = column.english;
+      text.appendChild(english);
+
+      const toggle = document.createElement("span");
+      toggle.className = "column-visibility-toggle";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = columnVisibilityDraft[column.index] !== false;
+      input.setAttribute("aria-label", `แสดงหัวข้อ ${column.thai}`);
+      input.addEventListener("change", () => {
+        columnVisibilityDraft[column.index] = input.checked;
+      });
+      toggle.append(input, document.createTextNode(input.checked ? "แสดง / Show" : "ซ่อน / Hide"));
+      input.addEventListener("change", () => {
+        toggle.lastChild.textContent = input.checked ? "แสดง / Show" : "ซ่อน / Hide";
+      });
+      row.append(text, toggle);
+      list.appendChild(row);
+    });
+  }
+
+  function openColumnVisibilitySettings() {
+    columnVisibilityDraft = getColumnVisibilityState();
+    renderColumnVisibilityEditor();
+    const modal = document.getElementById("columnVisibilityModal");
+    if (modal) modal.hidden = false;
+  }
+
+  function closeColumnVisibilitySettings(event) {
+    if (event && event.target !== event.currentTarget) return;
+    const modal = document.getElementById("columnVisibilityModal");
+    if (modal) modal.hidden = true;
+  }
+
+  function saveColumnVisibilitySettings() {
+    const saved = {};
+    let visibleCount = 0;
+    COLUMN_WIDTH_COLUMNS.forEach(column => {
+      saved[column.index] = columnVisibilityDraft[column.index] !== false;
+      if (saved[column.index]) visibleCount += 1;
+    });
+    if (!visibleCount) {
+      alert("ต้องแสดงอย่างน้อย 1 หัวข้อ / At least one heading must remain visible");
+      return;
+    }
+    localStorage.setItem(COLUMN_VISIBILITY_SETTINGS_KEY, JSON.stringify(saved));
+    applyColumnVisibility(saved);
+    closeColumnVisibilitySettings();
+    if (typeof window.saveSharedColumnVisibility === "function") {
+      Promise.resolve(window.saveSharedColumnVisibility(saved)).catch(error => {
+        console.error("Shared column visibility save failed", error);
+        alert("บันทึกหัวข้อไว้เฉพาะเครื่องนี้ เนื่องจากบันทึกค่ากลางไม่สำเร็จ");
+      });
+    }
   }
 
   function syncColumnWidthEditor() {
@@ -18743,6 +18874,7 @@
     renderHazardFormOptions();
     renderTable();
     if (Object.keys(readSavedColumnWidths()).length) applyColumnWidths(getColumnWidthState());
+    applyColumnVisibility(getColumnVisibilityState());
     updateSummary();
   }
 
@@ -18756,6 +18888,8 @@
         closeQrModal();
       } else if (!document.getElementById("columnWidthModal").hidden) {
         closeColumnWidthSettings();
+      } else if (!document.getElementById("columnVisibilityModal").hidden) {
+        closeColumnVisibilitySettings();
       } else {
         closeDrawer();
      }
@@ -18802,6 +18936,25 @@
       if (!Object.keys(normalized).length) return false;
       localStorage.setItem(COLUMN_WIDTH_SETTINGS_KEY, JSON.stringify(normalized));
       applyColumnWidths(normalized);
+      return true;
+    }
+
+    function normalizeSharedColumnVisibility(visibility) {
+      if (!visibility || typeof visibility !== "object" || Array.isArray(visibility)) return {};
+      var normalized = {};
+      COLUMN_WIDTH_COLUMNS.forEach(function (column) {
+        var value = visibility[column.index];
+        normalized[column.index] = value !== false && String(value).toLowerCase() !== "false";
+      });
+      if (!Object.keys(normalized).some(function (index) { return normalized[index]; })) return {};
+      return normalized;
+    }
+
+    function applySharedColumnVisibility(visibility) {
+      var normalized = normalizeSharedColumnVisibility(visibility);
+      if (!Object.keys(normalized).length) return false;
+      localStorage.setItem(COLUMN_VISIBILITY_SETTINGS_KEY, JSON.stringify(normalized));
+      applyColumnVisibility(normalized);
       return true;
     }
 
@@ -18868,9 +19021,79 @@
       return Promise.resolve(normalized);
     };
 
+    function loadSharedColumnVisibility() {
+      if (isAppsScript) {
+        return new Promise(function (resolve, reject) {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .getColumnVisibility();
+        });
+      }
+
+      if (isRemote) {
+        var settingsUrl = new URL(apiUrl, window.location.href);
+        settingsUrl.searchParams.set("action", "columnVisibility");
+        settingsUrl.searchParams.set("_", String(Date.now()));
+        return fetch(settingsUrl.toString(), {
+          method: "GET",
+          mode: "cors",
+          credentials: "omit",
+          cache: "no-store"
+        }).then(function (response) {
+          if (!response.ok) throw new Error("Apps Script column visibility HTTP " + response.status);
+          return response.json();
+        }).then(function (response) {
+          if (!response || response.ok === false) throw new Error(response && response.error || "Column visibility API error");
+          return response.data || {};
+        });
+      }
+
+      return Promise.resolve(null);
+    }
+
+    window.saveSharedColumnVisibility = function (visibility) {
+      var normalized = normalizeSharedColumnVisibility(visibility);
+      if (!Object.keys(normalized).length) return Promise.resolve(null);
+
+      if (isAppsScript) {
+        return new Promise(function (resolve, reject) {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .saveColumnVisibility(normalized);
+        });
+      }
+
+      if (isRemote) {
+        return fetch(apiUrl, {
+          method: "POST",
+          mode: "cors",
+          credentials: "omit",
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
+          body: JSON.stringify({ action: "saveColumnVisibility", columnVisibility: normalized })
+        }).then(function (response) {
+          if (!response.ok) throw new Error("Apps Script column visibility save HTTP " + response.status);
+          return response.json();
+        }).then(function (response) {
+          if (!response || response.ok === false) throw new Error(response && response.error || "บันทึกหัวข้อตารางส่วนกลางไม่สำเร็จ");
+          return normalized;
+        });
+      }
+
+      return Promise.resolve(normalized);
+    };
+
     function loadSharedColumnWidthsSafely() {
       return loadSharedColumnWidths().catch(function (error) {
         console.warn("Shared column widths unavailable; using local fallback", error);
+        return null;
+      });
+    }
+
+    function loadSharedColumnVisibilitySafely() {
+      return loadSharedColumnVisibility().catch(function (error) {
+        console.warn("Shared column visibility unavailable; using local fallback", error);
         return null;
       });
     }
@@ -19131,10 +19354,11 @@
           .withFailureHandler(reject)
           .listSds();
       });
-      Promise.all([rowsPromise, loadSharedColumnWidthsSafely()])
+      Promise.all([rowsPromise, loadSharedColumnWidthsSafely(), loadSharedColumnVisibilitySafely()])
         .then(function (results) {
           applyData(results[0]);
           if (results[1]) applySharedColumnWidths(results[1]);
+          if (results[2]) applySharedColumnVisibility(results[2]);
         })
         .catch(function (error) {
           console.error(error);
@@ -19165,10 +19389,11 @@
           if (!response || response.ok === false) throw new Error(response && response.error || "API error");
           return response;
         });
-      return Promise.all([dataPromise, loadSharedColumnWidthsSafely()])
+      return Promise.all([dataPromise, loadSharedColumnWidthsSafely(), loadSharedColumnVisibilitySafely()])
         .then(function (results) {
           applyData(results[0].data || []);
           if (results[1]) applySharedColumnWidths(results[1]);
+          if (results[2]) applySharedColumnVisibility(results[2]);
           setConnectionStatus();
           return results[0].data || [];
         });
