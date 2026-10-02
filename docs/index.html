@@ -653,34 +653,37 @@
       body.sds-quick-printing { overflow: visible !important; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body.sds-quick-printing > * { display: none !important; }
       body.sds-quick-printing > #sdsQuickModal { position: static !important; inset: auto !important; display: block !important; padding: 0 !important; background: #fff !important; }
-      body.sds-quick-printing .sds-quick-dialog { width: 100% !important; max-width: none !important; height: auto !important; max-height: none !important; overflow: visible !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
-      body.sds-quick-printing .sds-quick-header,
-      body.sds-quick-printing .sds-quick-actions,
-      body.sds-quick-printing .sds-quick-body > div:last-child { display: none !important; }
-      body.sds-quick-printing .sds-quick-body { padding: 0 !important; }
-      /* Separate borders: with collapsed borders Chrome's PDF output lets cell
-         backgrounds paint over the right edge of shaded rows. */
-      body.sds-quick-printing .sds-register-title { font-size: 20pt !important; margin-bottom: 4mm !important; }
-      body.sds-quick-printing .sds-register-title small { font-size: 12pt !important; }
-      body.sds-quick-printing .sds-register-table { width: 100% !important; max-width: 100% !important; height: 235mm; border-collapse: separate !important; border-spacing: 0 !important; border: 0 !important; border-top: 1px solid #1e293b !important; border-left: 1px solid #1e293b !important; }
-      body.sds-quick-printing .sds-register-table tr { break-inside: avoid; page-break-inside: avoid; }
-      body.sds-quick-printing .sds-register-table th,
-      body.sds-quick-printing .sds-register-table td { border: 0 !important; border-right: 1px solid #1e293b !important; border-bottom: 1px solid #1e293b !important; padding: 6px 8px !important; font-size: 12pt !important; line-height: 1.4 !important; }
-      body.sds-quick-printing .sds-register-table .measure-label { font-size: 11pt !important; }
-      body.sds-quick-printing .sds-register-table .measure-label small { font-size: 9.5pt !important; }
-      body.sds-quick-printing .sds-record-meta { font-size: 12pt !important; margin-top: 5mm !important; }
-      body.sds-quick-printing .sds-register-table th small,
-      body.sds-quick-printing .sds-register-table .register-summary-label small,
-      body.sds-quick-printing .sds-register-table .register-name-prefix small { font-size: 9.5pt !important; }
-      body.sds-quick-printing .sds-register-table .register-name { font-size: 15pt !important; }
-      body.sds-quick-printing .sds-register-table .register-measures .measure-value { font-size: 12pt !important; }
-      body.sds-quick-printing .sds-register-table .register-pictograms .pictogram-set .pictogram-image { width: 70px !important; height: 70px !important; }
-      body.sds-quick-printing .sds-register-table .register-ppe .ppe-item { min-height: 46px !important; gap: 6px !important; padding: 4px 6px !important; font-size: 10.5pt !important; }
-      body.sds-quick-printing .sds-register-table .register-ppe .ppe-item small { font-size: 9pt !important; }
-      body.sds-quick-printing .sds-register-table .register-ppe .ppe-icon-frame { width: 40px !important; height: 40px !important; flex-basis: 40px !important; }
-      body.sds-quick-printing .sds-register-table .register-ppe .ppe-icon { width: 36px !important; height: 36px !important; flex-basis: 36px !important; }
-      body.sds-quick-printing .ppe-item { break-inside: avoid; }
     }
+    /* Print layout. Applied on screen too while .sds-quick-printing is set so
+       printSdsQuickView() can measure it and scale long records to one page. */
+    body.sds-quick-printing .sds-quick-dialog { width: 100% !important; max-width: none !important; height: auto !important; max-height: none !important; overflow: visible !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+    body.sds-quick-printing .sds-quick-header,
+    body.sds-quick-printing .sds-quick-actions,
+    body.sds-quick-printing .sds-quick-body > div:last-child { display: none !important; }
+    body.sds-quick-printing .sds-quick-body { padding: 0 !important; }
+    /* Separate borders: with collapsed borders Chrome's PDF output lets cell
+       backgrounds paint over the right edge of shaded rows. */
+    body.sds-quick-printing .sds-register-title { font-size: 20pt !important; margin-bottom: 4mm !important; }
+    body.sds-quick-printing .sds-register-title small { font-size: 12pt !important; }
+    body.sds-quick-printing .sds-register-table { width: 100% !important; max-width: 100% !important; height: 235mm; border-collapse: separate !important; border-spacing: 0 !important; border: 0 !important; border-top: 1px solid #1e293b !important; border-left: 1px solid #1e293b !important; }
+    body.sds-quick-printing .sds-register-table tr { break-inside: avoid; page-break-inside: avoid; }
+    body.sds-quick-printing .sds-register-table th,
+    body.sds-quick-printing .sds-register-table td { border: 0 !important; border-right: 1px solid #1e293b !important; border-bottom: 1px solid #1e293b !important; padding: 6px 8px !important; font-size: 12pt !important; line-height: 1.4 !important; }
+    body.sds-quick-printing .sds-register-table .measure-label { font-size: 11pt !important; }
+    body.sds-quick-printing .sds-register-table .measure-label small { font-size: 9.5pt !important; }
+    body.sds-quick-printing .sds-record-meta { font-size: 12pt !important; margin-top: 5mm !important; }
+    body.sds-quick-printing .sds-register-table th small,
+    body.sds-quick-printing .sds-register-table .register-summary-label small,
+    body.sds-quick-printing .sds-register-table .register-name-prefix small { font-size: 9.5pt !important; }
+    body.sds-quick-printing .sds-register-table .register-name { font-size: 15pt !important; }
+    body.sds-quick-printing .sds-register-table .register-measures .measure-value { font-size: 12pt !important; }
+    body.sds-quick-printing .sds-register-table .register-pictograms .pictogram-set .pictogram-image { width: 70px !important; height: 70px !important; }
+    body.sds-quick-printing .sds-register-table .register-ppe .ppe-item { min-height: 46px !important; gap: 6px !important; padding: 4px 6px !important; font-size: 10.5pt !important; }
+    body.sds-quick-printing .sds-register-table .register-ppe .ppe-item small { font-size: 9pt !important; }
+    body.sds-quick-printing .sds-register-table .register-ppe .ppe-icon-frame { width: 40px !important; height: 40px !important; flex-basis: 40px !important; }
+    body.sds-quick-printing .sds-register-table .register-ppe .ppe-icon { width: 36px !important; height: 36px !important; flex-basis: 36px !important; }
+    body.sds-quick-printing .ppe-item { break-inside: avoid; }
+    body.sds-quick-printing #sdsQuickModal * { animation: none !important; transition: none !important; }
 
     @keyframes ppeIconFloat {
       0%, 100% { transform: translateY(0) scale(1); }
@@ -17497,10 +17500,48 @@
     }
   }
 
+  // Shrinks the quick-view print layout so long records fit one A4 page
+  // (190 x 277 mm printable area with the 10 mm @page margin). Widening the
+  // layout by 1/zoom keeps the zoomed result at full page width; a few passes
+  // settle the text re-wrapping caused by the wider layout.
+  function fitQuickPrintToOnePage() {
+    const dialog = document.querySelector("#sdsQuickModal .sds-quick-dialog");
+    if (!dialog) return () => {};
+    const pxPerMm = 96 / 25.4;
+    const pageWidth = 190 * pxPerMm;
+    const pageHeight = 277 * pxPerMm - 6;
+    const measure = layoutZoom => {
+      const width = `${pageWidth / layoutZoom}px`;
+      dialog.style.removeProperty("zoom");
+      // Pin the width: on screen the modal is a flex container that would
+      // otherwise shrink the dialog to the viewport and skew the measurement.
+      dialog.style.setProperty("width", width, "important");
+      dialog.style.setProperty("min-width", width, "important");
+      dialog.style.setProperty("flex", "none", "important");
+      return dialog.scrollHeight;
+    };
+    let zoom = 1;
+    for (let pass = 0; pass < 4; pass++) {
+      const next = Math.min(1, pageHeight / measure(zoom));
+      if (Math.abs(next - zoom) < 0.005) { zoom = next; break; }
+      zoom = next;
+    }
+    const height = measure(zoom);
+    const finalZoom = Math.min(zoom, pageHeight / height, 1);
+    const resetFit = () => ["zoom", "width", "min-width", "flex"].forEach(name => dialog.style.removeProperty(name));
+    if (finalZoom < 1) dialog.style.setProperty("zoom", String(finalZoom));
+    else resetFit();
+    return resetFit;
+  }
+
   function printSdsQuickView() {
     if (!currentQuickSdsRecord) return;
-    const cleanup = () => document.body.classList.remove("sds-quick-printing");
     document.body.classList.add("sds-quick-printing");
+    const resetFit = fitQuickPrintToOnePage();
+    const cleanup = () => {
+      resetFit();
+      document.body.classList.remove("sds-quick-printing");
+    };
     window.addEventListener("afterprint", cleanup, { once: true });
     window.print();
     window.setTimeout(cleanup, 1000);
