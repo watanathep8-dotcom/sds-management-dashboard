@@ -81,6 +81,11 @@
     .settings-btn:hover { transform: translateY(-2px); background: #dbeafe; box-shadow: 0 6px 14px rgba(30, 64, 175, 0.14); }
     .topbar-actions { display: flex; align-items: center; gap: 10px; }
     .topbar-actions .btn-primary { padding: 9px 14px; font-size: 13px; white-space: nowrap; }
+    .site-qr-btn { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px 4px 4px; border: 1px solid #bfdbfe; border-radius: 10px; background: #fff; color: #1e3a8a; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+    .site-qr-btn:hover { border-color: #60a5fa; box-shadow: 0 4px 12px rgba(37, 99, 235, .15); }
+    .site-qr-btn small { display: block; color: var(--muted); font-size: 10px; font-weight: 600; }
+    .site-qr-mini { display: grid; place-items: center; width: 46px; height: 46px; padding: 2px; border-radius: 6px; background: #fff; }
+    .site-qr-mini img, .site-qr-mini canvas { width: 42px !important; height: 42px !important; image-rendering: pixelated; }
 
     .container { max-width: 1500px; margin: auto; padding: 30px; }
     .page-header {
@@ -766,6 +771,8 @@
       .container { padding: 18px; }
       .topbar { padding: 0 18px; }
       .topbar-actions .btn-primary { padding: 8px 10px; font-size: 11px; }
+      .site-qr-btn .bilingual-label { display: none; }
+      .site-qr-btn { padding: 3px; }
       .cards { grid-template-columns: 1fr; }
       .page-header { align-items: flex-start; flex-direction: column; }
       .page-header .btn-primary { width: 100%; }
@@ -924,6 +931,10 @@
     </div>
   </div>
   <div class="topbar-actions">
+    <button class="site-qr-btn" type="button" onclick="openSiteQrModal()" title="สแกนเพื่อเปิดเว็บไซต์ / Scan to open this website" aria-label="QR Code เว็บไซต์ / Website QR code">
+      <span class="site-qr-mini" id="siteQrMini" aria-hidden="true"></span>
+      <span class="bilingual-label">สแกนเข้าเว็บ<small>Scan to open</small></span>
+    </button>
     <button id="addSdsButton" class="btn-primary" onclick="openAddDrawer()"><span class="bilingual-label">＋ เพิ่มข้อมูล SDS<small>Add SDS</small></span></button>
   </div>
 </header>
@@ -1152,6 +1163,24 @@
       <div class="qr-dialog-actions">
         <button class="btn-primary" type="button" onclick="printQrCode()"><span class="bilingual-label">🖨 พิมพ์ QR<small>Print QR</small></span></button>
         <button class="btn-secondary" type="button" onclick="closeQrModal()"><span class="bilingual-label">ปิด<small>Close</small></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="qr-modal" id="siteQrModal" onclick="if (event.target.id === 'siteQrModal') closeSiteQrModal()">
+  <div class="qr-dialog">
+    <div class="qr-dialog-header">
+      <h3><span class="bilingual-label">QR Code เว็บไซต์<small>Website QR Code</small></span></h3>
+      <button class="close-btn" type="button" onclick="closeSiteQrModal()">×</button>
+    </div>
+    <div class="qr-dialog-body">
+      <div class="qr-code-box" id="siteQrBox"></div>
+      <div class="qr-record-name">ระบบจัดการ SDS</div>
+      <div class="qr-record-cas">สแกนเพื่อเปิดเว็บไซต์ / Scan to open the website</div>
+      <div class="qr-url" id="siteQrUrl">-</div>
+      <div class="qr-dialog-actions">
+        <button class="btn-secondary" type="button" onclick="closeSiteQrModal()"><span class="bilingual-label">ปิด<small>Close</small></span></button>
       </div>
     </div>
   </div>
@@ -17394,6 +17423,34 @@
   function qrModalBackdrop(event) {
     if (event.target.id === "qrModal") closeQrModal();
   }
+
+  // Website QR (header). Points at the dashboard root without query/hash so
+  // scanning it always opens the main page. Standard dark-on-light modules
+  // are used because inverted QR codes do not scan on every phone camera.
+  function siteHomeUrl() {
+    return new URL("./", window.location.href).href;
+  }
+
+  function renderSiteQr(box, size) {
+    if (!box || !window.QRCode) return;
+    box.innerHTML = "";
+    const correction = window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : 0;
+    new window.QRCode(box, { text: siteHomeUrl(), width: size, height: size, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: correction });
+  }
+
+  function openSiteQrModal() {
+    renderSiteQr(document.getElementById("siteQrBox"), 280);
+    document.getElementById("siteQrUrl").textContent = siteHomeUrl();
+    document.getElementById("siteQrModal").classList.add("show");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeSiteQrModal() {
+    document.getElementById("siteQrModal").classList.remove("show");
+    document.body.style.overflow = "";
+  }
+
+  renderSiteQr(document.getElementById("siteQrMini"), 168);
 
   function getPdfSourceForLanguage(item, language) {
     const prefix = language === "Thai" ? "thai" : "english";
