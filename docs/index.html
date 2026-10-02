@@ -18011,6 +18011,12 @@
     return password.trim();
   }
 
+  function getSettingsPassword() {
+    const password = window.prompt("กรุณาใส่รหัสก่อนตั้งค่าตาราง / Enter password to change table settings");
+    if (password === null || !password.trim()) return null;
+    return password.trim();
+  }
+
   // Editing an existing record uses the same shared password as deletion.
   function getEditPassword() {
     const password = window.prompt("กรุณาใส่รหัสก่อนแก้ไขข้อมูล / Enter edit password");
@@ -18693,12 +18699,14 @@
     }
   }
 
-  function renderTable() {
+  // Rows matching the current search, hazard filter and special filter.
+  // Shared by the table and the CSV export so both always agree.
+  function getFilteredSdsData() {
     const search = document.getElementById("searchInput").value.toLowerCase();
     const hazard = document.getElementById("hazardFilter").value.trim().toLowerCase();
     const special = window.sdsSpecialFilter || "";
 
-    const filtered = sdsData.filter(item => {
+    return sdsData.filter(item => {
       const names = chemicalNameFields(item);
       const searchMatch =
         `${names.chemical} ${names.chemicalThai} ${names.chemicalEnglish}`.toLowerCase().includes(search) ||
@@ -18717,6 +18725,10 @@
         : (special === "thai" && !item.thaiSds));
       return searchMatch && hazardMatch && missingMatch;
     });
+  }
+
+  function renderTable() {
+    const filtered = getFilteredSdsData();
 
     document.getElementById("tableCount").innerHTML = bilingualHTML(`${filtered.length} รายการ`, `${filtered.length} items`);
 
@@ -18802,9 +18814,15 @@
       const detail = String(item.value || item.detail || "").trim();
       return `${item.thai || ""} / ${item.english || ""}${detail ? `: ${detail}` : ""}`;
     }).join(" | ");
+    const header = ["ลำดับ / No.", "กลุ่ม / Group", "สารเคมี ภาษาไทย / Chemical (Thai)", "สารเคมี ภาษาอังกฤษ / Chemical (English)", "สัญลักษณ์ความอันตราย / Pictogram", "องค์ประกอบ / Composition", "เลข CAS / CAS Number", "อัตราส่วน (%) / Concentration (%)", "จุดวาบไฟ / Flash Point", "มาตรการปฐมพยาบาล / First aid measures", "มาตรการดับเพลิง / Firefighting measures", "SDS ภาษาไทย / Thai SDS", "SDS ภาษาอังกฤษ / English SDS", "ลิงก์ข้อมูล SDS / SDS Link"];
+    // Table column (COLUMN_WIDTH_COLUMNS index) each CSV column comes from;
+    // CSV columns whose table column is hidden are left out.
+    const sourceColumn = [1, 2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+    const visibility = getColumnVisibilityState();
+    const keep = sourceColumn.map(index => visibility[index] !== false);
     const rows = [
-      ["ลำดับ / No.", "กลุ่ม / Group", "สารเคมี ภาษาไทย / Chemical (Thai)", "สารเคมี ภาษาอังกฤษ / Chemical (English)", "สัญลักษณ์ความอันตราย / Pictogram", "องค์ประกอบ / Composition", "เลข CAS / CAS Number", "อัตราส่วน (%) / Concentration (%)", "จุดวาบไฟ / Flash Point", "มาตรการปฐมพยาบาล / First aid measures", "มาตรการดับเพลิง / Firefighting measures", "SDS ภาษาไทย / Thai SDS", "SDS ภาษาอังกฤษ / English SDS", "ลิงก์ข้อมูล SDS / SDS Link"],
-     ...sdsData.map(item => {
+      header,
+     ...getFilteredSdsData().map(item => {
         const thaiAvailable = Boolean(item.thaiPdfUrl || item.thaiSdsUrl || item.thaiPdfFileId || item.thaiSdsFileId);
         const englishAvailable = Boolean(item.englishPdfUrl || item.englishSdsUrl || item.pdfUrl || item.englishPdfFileId || item.englishSdsFileId || item.pdfFileId);
         const hazards = (item.hazards || []).map(name => {
@@ -18825,7 +18843,8 @@
     ];
 
     const csv = rows.map(row =>
-      row.map(value => `"${String(value || "").replaceAll('"', '""')}"`).join(",")
+      row.filter((value, index) => keep[index])
+        .map(value => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")
     ).join("\n");
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -19080,7 +19099,7 @@
           mode: "cors",
           credentials: "omit",
           headers: { "Content-Type": "text/plain;charset=UTF-8" },
-          body: JSON.stringify({ action: "saveColumnWidths", columnWidths: normalized })
+          body: JSON.stringify({ action: "saveColumnWidths", columnWidths: normalized, password: window.sdsSettingsPassword || "" })
         }).then(function (response) {
           if (!response.ok) throw new Error("Apps Script column width save HTTP " + response.status);
           return response.json();
@@ -19143,7 +19162,7 @@
           mode: "cors",
           credentials: "omit",
           headers: { "Content-Type": "text/plain;charset=UTF-8" },
-          body: JSON.stringify({ action: "saveColumnVisibility", columnVisibility: normalized })
+          body: JSON.stringify({ action: "saveColumnVisibility", columnVisibility: normalized, password: window.sdsSettingsPassword || "" })
         }).then(function (response) {
           if (!response.ok) throw new Error("Apps Script column visibility save HTTP " + response.status);
           return response.json();
@@ -19720,6 +19739,26 @@
       }
       return postRemote({ action: "verifyPassword", password: password });
     }
+
+    // Shared table settings change the layout for every device, so opening
+    // them requires the same password as editing.
+    function requireSettingsPassword(open) {
+      return async function () {
+        if (!isRemote) return open.apply(this, arguments);
+        var password = getSettingsPassword();
+        if (!password) return;
+        try {
+          await verifyActionPassword(password);
+        } catch (error) {
+          alert(error && error.message ? error.message : "รหัสไม่ถูกต้อง / Incorrect password.");
+          return;
+        }
+        window.sdsSettingsPassword = password;
+        return open.apply(this, arguments);
+      };
+    }
+    window.openColumnWidthSettings = requireSettingsPassword(window.openColumnWidthSettings);
+    window.openColumnVisibilitySettings = requireSettingsPassword(window.openColumnVisibilitySettings);
 
     window.editSDS = async function (id) {
       if (!isAppsScript && !isRemote) return baseEdit(id);

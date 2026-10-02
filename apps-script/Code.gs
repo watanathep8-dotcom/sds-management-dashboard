@@ -112,8 +112,10 @@ function doPost(e) {
     } else if (action === "verifyPassword") {
       result = verifyActionPassword(payload.password);
     } else if (action === "saveColumnWidths") {
+      assertActionPassword_(payload.password);
       result = saveColumnWidths_(payload.columnWidths);
     } else if (action === "saveColumnVisibility") {
+      assertActionPassword_(payload.password);
       result = saveColumnVisibility_(payload.columnVisibility);
     } else if (action === "saveHazardDefinitions") {
       result = saveHazardDefinitions_(payload.hazardDefinitions);
