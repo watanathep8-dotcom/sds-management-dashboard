@@ -18328,7 +18328,7 @@
       const hidden = visibility && visibility[column.index] === false;
       const col = colgroup.querySelector(`col[data-column-index="${column.index}"]`);
       if (col) col.style.display = hidden ? "none" : "";
-      table.querySelectorAll(`thead th:nth-child(${column.index}), tbody td:nth-child(${column.index})`).forEach(cell => {
+      table.querySelectorAll(`thead th:nth-child(${column.index}), tbody td:nth-child(${column.index}):not([colspan])`).forEach(cell => {
         cell.style.display = hidden ? "none" : "";
       });
     });
@@ -18717,6 +18717,9 @@
             <button class="action-btn" title="ลบ" onclick="deleteSDS(${item.id})">🗑️</button>
           </td>
         </tr>`).join("");
+    // Rows are rebuilt on every search/filter, so hidden headings must be
+    // re-applied to the new cells or the body shifts against the header.
+    applyColumnVisibility(getColumnVisibilityState());
   }
 
  function languageSdsCell(item, language) {
