@@ -486,6 +486,15 @@ function saveSds(record, fileData, password) {
     var sheet = getSheet_();
     var requestedId = clean_(record && record.id);
     var existing = findRowById_(sheet, requestedId);
+    if (existing) {
+      // A client that omits a field (e.g. one the edit form has no input for)
+      // must not wipe the stored value.
+      var stored = rowToObject_(sheet.getRange(existing, 1, 1, SDS_HEADERS.length).getValues()[0]);
+      record = Object.assign({}, record);
+      Object.keys(stored).forEach(function(key) {
+        if (record[key] === undefined) record[key] = stored[key];
+      });
+    }
     if (!PUBLIC_SDS_WRITE_ENABLED && !isAdmin_()) {
       throw new Error("ยังไม่เปิดให้ผู้ใช้ทั่วไปบันทึกข้อมูล SDS / Public SDS writing is disabled");
     }
@@ -637,7 +646,7 @@ function normalizeRecord_(record) {
   var hazards = Array.isArray(record.hazards) ? record.hazards : [];
   hazards = hazards.map(function(item) { return clean_(item); }).filter(String).filter(function(item, index, list) {
     return list.indexOf(item) === index;
-  }).slice(0, 6);
+  }).slice(0, HAZARD_DEFINITIONS_MAX_ITEMS);
   var thaiSds = record.thaiSds === true || String(record.thaiSds || "").toLowerCase() === "true";
   var language = clean_(record.language);
   if (["English", "Thai"].indexOf(language) === -1) language = thaiSds ? "Thai" : "English";
@@ -775,7 +784,7 @@ function rowToObject_(row) {
     revisionDate: formatDateValue_(row[5]),
     status: normalizeStatus_(row[6]),
     signalWord: String(row[7] || ""),
-    hazards: String(row[8] || "").split("|").filter(String).slice(0, 6),
+    hazards: String(row[8] || "").split("|").filter(String).slice(0, HAZARD_DEFINITIONS_MAX_ITEMS),
     pdfFileId: fileId,
     pdfName: String(row[10] || ""),
     pdfUrl: storedPdfUrl || (fileId ? "https://drive.google.com/file/d/" + encodeURIComponent(fileId) + "/preview" : ""),

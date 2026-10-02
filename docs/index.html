@@ -17244,7 +17244,7 @@
      ce: compact(names.chemicalEnglish, 140),
      ca: String(item.cas || ""),
       s: compact(item.supplier, 150),
-     h: Array.isArray(item.hazards) ? item.hazards.slice(0, 6) : [],
+     h: Array.isArray(item.hazards) ? item.hazards.slice(0, 9) : [],
       f: compact(item.flashPoint, 60),
      co: compact(item.composition, 180),
      r: compact(item.ratio, 80),
@@ -17394,8 +17394,9 @@
 
   function getPdfSourceForLanguage(item, language) {
     const prefix = language === "Thai" ? "thai" : "english";
-    const sourceUrl = item[`${prefix}PdfUrl`] || item[`${prefix}SdsUrl`] || item[`${prefix}Pdf`] || item.pdfUrl || "";
-    const fileId = item[`${prefix}PdfFileId`] || item[`${prefix}SdsFileId`] || item.pdfFileId || "";
+    const ownFileId = item[`${prefix}PdfFileId`] || item[`${prefix}SdsFileId`] || "";
+    const sourceUrl = item[`${prefix}PdfUrl`] || item[`${prefix}SdsUrl`] || item[`${prefix}Pdf`] || (ownFileId ? "" : item.pdfUrl) || "";
+    const fileId = ownFileId || item.pdfFileId || "";
     const name = item[`${prefix}PdfName`] || item[`${prefix}SdsName`] || item.pdfName || `${item.chemical || "SDS"}-${language}.pdf`;
     return { url: String(sourceUrl || ""), fileId: String(fileId || ""), name: String(name || "") };
   }
@@ -17932,13 +17933,14 @@
     if (!item) return;
 
     document.getElementById("editId").value = item.id;
+    document.getElementById("sdsFile").value = "";
     pdfAutoExtractedData = {};
     setPdfAutoStatus("เลือก PDF ใหม่เพื่ออ่านข้อมูลอัตโนมัติ", "Choose a new PDF to auto-detect data", "");
     const names = chemicalNameFields(item);
     document.getElementById("chemical").value = names.chemical;
     document.getElementById("chemicalThai").value = names.chemicalThai;
     document.getElementById("chemicalEnglish").value = names.chemicalEnglish;
-    document.getElementById("cas").value = item.cas;
+    document.getElementById("cas").value = item.cas || "";
     document.getElementById("sequence").value = item.sequence || "";
     document.getElementById("group").value = item.group || "";
     document.getElementById("composition").value = item.composition || "";
@@ -18396,7 +18398,7 @@
     if (typeof window.saveSharedColumnVisibility === "function") {
       Promise.resolve(window.saveSharedColumnVisibility(saved)).catch(error => {
         console.error("Shared column visibility save failed", error);
-        alert("บันทึกหัวข้อไว้เฉพาะเครื่องนี้ เนื่องจากบันทึกค่ากลางไม่สำเร็จ");
+        alert("บันทึกหัวข้อส่วนกลางไม่สำเร็จ ค่าจะกลับเป็นแบบเดิมเมื่อรีโหลดหน้า / Shared save failed; the change will be lost on reload." + (error && error.message ? "\n" + error.message : ""));
       });
     }
   }
@@ -18495,7 +18497,7 @@
     if (typeof window.saveSharedColumnWidths === "function") {
       Promise.resolve(window.saveSharedColumnWidths(saved)).catch(error => {
         console.error("Shared column width save failed", error);
-        alert("บันทึกความกว้างไว้เฉพาะเครื่องนี้ เนื่องจากบันทึกค่ากลางไม่สำเร็จ");
+        alert("บันทึกความกว้างส่วนกลางไม่สำเร็จ ค่าจะกลับเป็นแบบเดิมเมื่อรีโหลดหน้า / Shared save failed; the change will be lost on reload." + (error && error.message ? "\n" + error.message : ""));
       });
     }
   }
@@ -18645,7 +18647,7 @@
     if (typeof window.saveSharedHazardDefinitions === "function") {
       Promise.resolve(window.saveSharedHazardDefinitions(hazardDefinitions)).catch(error => {
         console.error("Shared hazard settings save failed", error);
-        alert("บันทึกการตั้งค่า Hazard ไว้เฉพาะเครื่องนี้ เนื่องจากบันทึกค่ากลางไม่สำเร็จ");
+        alert("บันทึกการตั้งค่า Hazard ส่วนกลางไม่สำเร็จ ค่าจะกลับเป็นแบบเดิมเมื่อรีโหลดหน้า / Shared save failed; the change will be lost on reload." + (error && error.message ? "\n" + error.message : ""));
       });
     }
   }
@@ -19416,6 +19418,8 @@
       });
     }
 
+    var qrOpenedFromLiveData = false;
+
     function applyData(data) {
       var remoteRows = Array.isArray(data) ? data : [];
       var remoteById = new Map(remoteRows.map(function (item) { return [String(item.id || ""), item]; }));
@@ -19425,9 +19429,13 @@
         "englishPdfUrl", "englishPdfName", "englishPdfFileId", "englishSdsUrl", "englishSdsName", "englishSdsFileId",
         "sdsLanguages", "thaiSds", "language"
       ];
-      sdsData = defaultData.map(function (seed) {
+      // The Google Sheet is the source of truth: a built-in record that is no
+      // longer on the server was deleted and must not be restored from the
+      // embedded seed data.
+      sdsData = defaultData.filter(function (seed) {
+        return remoteById.has(String(seed.id || ""));
+      }).map(function (seed) {
         var remote = remoteById.get(String(seed.id || ""));
-        if (!remote) return withChemicalNames({ ...seed, hazards: normalizeHazards(seed.hazards) });
         var merged = { ...seed };
         pdfFields.forEach(function (field) {
           if (remote[field] !== undefined && remote[field] !== null && remote[field] !== "") merged[field] = remote[field];
@@ -19448,7 +19456,10 @@
       sdsData.sort(function (a, b) { return (Number(a.sequence) || Number.MAX_SAFE_INTEGER) - (Number(b.sequence) || Number.MAX_SAFE_INTEGER); });
       refreshDashboard();
      applyPublicMode();
-      openSdsFromQrUrl();
+      if (!qrOpenedFromLiveData) {
+        qrOpenedFromLiveData = true;
+        openSdsFromQrUrl();
+      }
    }
 
     function loadFromAppsScript() {
@@ -19539,7 +19550,18 @@
       var chemicalEnglish = document.getElementById("chemicalEnglish").value.trim();
       var chemical = chemicalEnglish || chemicalThai;
       document.getElementById("chemical").value = chemical;
+      // Fields without form inputs are carried over unchanged. Empty values
+      // fall back to the built-in seed copy so earlier lossy saves can be
+      // repaired simply by editing and saving the record again.
+      var seedRecord = editId ? defaultData.find(function (item) { return String(item.id) === String(editId); }) : null;
+      var carried = {};
+      ["revisionDate", "reviewDate", "emergencyResponse", "sdsLanguages", "responsibleParty", "recorder", "dateOfUse", "registerSds", "components"].forEach(function (field) {
+        var hasValue = function (value) { return Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null && String(value).trim() !== ""; };
+        var value = existing && hasValue(existing[field]) ? existing[field] : (seedRecord && hasValue(seedRecord[field]) ? seedRecord[field] : undefined);
+        if (value !== undefined) carried[field] = value;
+      });
       return {
+        ...carried,
         id: editId || "",
         chemical: chemical,
         chemicalThai: chemicalThai,
@@ -19581,9 +19603,12 @@
       });
     }
 
+    var isSavingSds = false;
+
     window.saveSDS = async function () {
       if (!isAppsScript && !isRemote) return baseSave();
       if (publicReadOnly) return;
+      if (isSavingSds) return;
 
       var record = collectRecord();
       if (!record.chemical) {
@@ -19591,6 +19616,7 @@
         return;
       }
 
+      isSavingSds = true;
       try {
         var file = document.getElementById("sdsFile").files[0] || null;
         var fileData = await readFile(file);
@@ -19598,19 +19624,23 @@
         if (isAppsScript) {
           google.script.run
             .withSuccessHandler(function () {
+              isSavingSds = false;
               closeDrawer();
               loadFromAppsScript();
             })
             .withFailureHandler(function (error) {
+              isSavingSds = false;
               alert(error && error.message ? error.message : "บันทึกข้อมูลไม่สำเร็จ");
             })
             .saveSds(record, fileData, window.sdsEditPassword || "");
         } else {
           await postRemote({ action: "save", record: record, file: fileData, password: window.sdsEditPassword || "" });
+          isSavingSds = false;
           closeDrawer();
           setTimeout(function () { loadFromRemoteApi().catch(function (error) { alert(error.message); }); }, 900);
         }
       } catch (error) {
+        isSavingSds = false;
         alert(error.message || "บันทึกข้อมูลไม่สำเร็จ");
       }
     };
