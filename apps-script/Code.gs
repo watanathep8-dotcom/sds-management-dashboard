@@ -331,6 +331,26 @@ function setupSystem() {
 }
 
 /**
+ * One-time cleanup: clears the "recorder" and "dateOfUse" values of every SDS
+ * row. Run it once from the Apps Script editor (select the function, press
+ * Run). Other columns are not touched. Returns the number of rows cleared.
+ */
+function clearRecorderAndDateOfUse() {
+  var sheet = getSheet_();
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return 0;
+  var rowCount = lastRow - 1;
+  var blank = [];
+  for (var i = 0; i < rowCount; i++) blank.push([""]);
+  ["recorder", "dateOfUse"].forEach(function(header) {
+    var column = SDS_HEADERS.indexOf(header) + 1;
+    sheet.getRange(2, column, rowCount, 1).setValues(blank);
+  });
+  console.log("Cleared recorder and dateOfUse on " + rowCount + " rows.");
+  return rowCount;
+}
+
+/**
  * Imports the 98-record catalog published with the GitHub dashboard into the
  * new Google Sheet. PDF links remain public GitHub asset links so viewers do
  * not need to sign in to Google Drive. Thai and English links are kept
