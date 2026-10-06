@@ -4,6 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบจัดการ SDS | SDS Management Dashboard</title>
+  <!-- Warm up connections: Apps Script API (+ its googleusercontent redirect)
+       is fetched anonymously (credentials: "omit"), CDN scripts are not. -->
+  <link rel="preconnect" href="https://script.google.com" crossorigin>
+  <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="https://script.google.com">
+  <link rel="dns-prefetch" href="https://script.googleusercontent.com">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <script src="config.js?v=1789633000000"></script>
+  <script>
+    /* Start the single bootstrap request (rows + shared settings) while the
+       rest of this large page is still downloading. The bridge script at the
+       end of the page consumes window.sdsEarlyBootstrap; if the backend does
+       not support action=bootstrap yet it falls back to the individual calls. */
+    (function () {
+      try {
+        var config = window.SDS_CONFIG || {};
+        var apiUrl = String(config.apiUrl || "").trim();
+        var isAppsScript = typeof google !== "undefined" && google.script && google.script.run;
+        if (!apiUrl || isAppsScript || typeof fetch !== "function") return;
+        var url = new URL(apiUrl, window.location.href);
+        url.searchParams.set("action", "bootstrap");
+        url.searchParams.set("_", String(Date.now()));
+        var request = fetch(url.toString(), { method: "GET", mode: "cors", credentials: "omit", cache: "no-store" })
+          .then(function (response) {
+            if (!response.ok) throw new Error("Apps Script bootstrap HTTP " + response.status);
+            return response.json();
+          });
+        request.catch(function () {});
+        window.sdsEarlyBootstrap = { apiUrl: apiUrl, request: request };
+      } catch (error) {
+        window.sdsEarlyBootstrap = null;
+      }
+    })();
+  </script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -1199,8 +1234,11 @@
     <div class="sds-quick-body" id="sdsQuickBody"></div>
   </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- Deferred: both libraries are only needed after the page is parsed
+     (loadPdfJs() and renderSiteQr() wait for them), so they no longer block
+     the first render of the table. -->
+<script defer id="pdfJsLibraryScript" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script defer id="qrCodeLibraryScript" src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
   const HAZARD_SETTINGS_KEY = "sdsPictogramDefinitionsV2";
   const DEFAULT_HAZARD_DEFINITIONS = [
@@ -17071,9 +17109,24 @@
     pages.style.display = "none";
   }
 
+  // pdf.min.js and qrcode.min.js are loaded with "defer": they run after the
+  // page is parsed and before DOMContentLoaded. Code that may run earlier
+  // (e.g. a QR deep link opened during start-up) waits for that point.
+  function afterDeferredLibraries(callback) {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", callback, { once: true });
+    else callback();
+  }
+
   function loadPdfJs() {
     if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
     if (pdfJsPromise) return pdfJsPromise;
+    if (document.readyState === "loading") {
+      pdfJsPromise = new Promise(resolve => afterDeferredLibraries(resolve)).then(() => {
+        pdfJsPromise = null;
+        return loadPdfJs();
+      });
+      return pdfJsPromise;
+    }
     pdfJsPromise = new Promise((resolve, reject) => {
       const script = document.createElement("script");
       script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
@@ -17340,6 +17393,10 @@
   }
 
   function showQrCode(id) {
+    if (!window.QRCode && document.readyState === "loading") {
+      afterDeferredLibraries(() => showQrCode(id));
+      return;
+    }
     const item = sdsData.find(row => String(row.id) === String(id));
     if (!item) return;
     currentQrRecord = item;
@@ -17432,6 +17489,10 @@
   }
 
   function renderSiteQr(box, size) {
+    if (box && !window.QRCode && document.readyState === "loading") {
+      afterDeferredLibraries(() => renderSiteQr(box, size));
+      return;
+    }
     if (!box || !window.QRCode) return;
     box.innerHTML = "";
     const correction = window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : 0;
@@ -19048,7 +19109,6 @@
  refreshDashboard();
   openSdsFromQrUrl();
 </script>
-<script src="config.js?v=1789633000000"></script>
 <script>
   /* ---------------------------------------------------------------
      Google Apps Script / GitHub Pages bridge
@@ -19151,6 +19211,7 @@
       }
 
       if (isRemote) {
+        noteLocalSettingChange("columnWidths", normalized);
         return fetch(apiUrl, {
           method: "POST",
           mode: "cors",
@@ -19162,6 +19223,7 @@
           return response.json();
         }).then(function (response) {
           if (!response || response.ok === false) throw new Error(response && response.error || "บันทึกค่าความกว้างส่วนกลางไม่สำเร็จ");
+          patchCachedBundle("columnWidths", response.data || normalized);
           return normalized;
         });
       }
@@ -19214,6 +19276,7 @@
       }
 
       if (isRemote) {
+        noteLocalSettingChange("columnVisibility", normalized);
         return fetch(apiUrl, {
           method: "POST",
           mode: "cors",
@@ -19225,6 +19288,7 @@
           return response.json();
         }).then(function (response) {
           if (!response || response.ok === false) throw new Error(response && response.error || "บันทึกหัวข้อตารางส่วนกลางไม่สำเร็จ");
+          patchCachedBundle("columnVisibility", response.data || normalized);
           return normalized;
         });
       }
@@ -19290,6 +19354,7 @@
       }
 
       if (isRemote) {
+        noteLocalSettingChange("hazardDefinitions", definitions);
         return fetch(apiUrl, {
           method: "POST",
           mode: "cors",
@@ -19301,6 +19366,7 @@
           return response.json();
         }).then(function (response) {
           if (!response || response.ok === false) throw new Error(response && response.error || "บันทึกการตั้งค่า Hazard ส่วนกลางไม่สำเร็จ");
+          patchCachedBundle("hazardDefinitions", response.data);
           return response.data;
         });
       }
@@ -19537,7 +19603,7 @@
 
     var qrOpenedFromLiveData = false;
 
-    function applyData(data) {
+    function applyData(data, fromCache) {
       var remoteRows = Array.isArray(data) ? data : [];
       var remoteById = new Map(remoteRows.map(function (item) { return [String(item.id || ""), item]; }));
       var pdfFields = [
@@ -19574,10 +19640,146 @@
       refreshDashboard();
      applyPublicMode();
       if (!qrOpenedFromLiveData) {
-        qrOpenedFromLiveData = true;
+        // The saved copy may open a QR deep link early; the first live data
+        // from the Sheet still opens it once more, exactly as before.
+        if (!fromCache) qrOpenedFromLiveData = true;
         openSdsFromQrUrl();
       }
    }
+
+    /* -------- Start-up bundle: rows + shared settings ------------------
+       One action=bootstrap request replaces api + columnWidths +
+       columnVisibility + hazardDefinitions. The last live bundle is kept in
+       localStorage and drawn immediately on the next visit
+       (stale-while-revalidate); the live answer from the Sheet then replaces
+       it, so records deleted on the server disappear again. A redraw is
+       skipped when nothing changed and postponed while the edit drawer or a
+       settings dialog is open, so it never overwrites what the user is
+       editing. */
+    var BOOTSTRAP_CACHE_KEY = "sdsBootstrapCacheV1";
+    var renderedBundleSignature = "";
+    var bundleApplySequence = 0;
+    var pendingBundle = null;
+
+    function normalizeBundle(source) {
+      source = source || {};
+      return {
+        rows: Array.isArray(source.rows) ? source.rows : [],
+        columnWidths: source.columnWidths || null,
+        columnVisibility: source.columnVisibility || null,
+        hazardDefinitions: source.hazardDefinitions || null
+      };
+    }
+
+    function bundleSignature(bundle) {
+      return JSON.stringify([bundle.rows, bundle.columnWidths, bundle.columnVisibility, bundle.hazardDefinitions]);
+    }
+
+    function readCachedBundle() {
+      try {
+        var entry = JSON.parse(localStorage.getItem(BOOTSTRAP_CACHE_KEY) || "null");
+        if (!entry || entry.apiUrl !== apiUrl || !entry.bundle || !Array.isArray(entry.bundle.rows)) return null;
+        return normalizeBundle(entry.bundle);
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function writeCachedBundle(bundle) {
+      try {
+        localStorage.setItem(BOOTSTRAP_CACHE_KEY, JSON.stringify({ apiUrl: apiUrl, savedAt: Date.now(), bundle: bundle }));
+      } catch (error) {
+        try { localStorage.removeItem(BOOTSTRAP_CACHE_KEY); } catch (ignored) {}
+      }
+    }
+
+    // A shared setting was just changed on this page: a redraw that is still
+    // waiting must not bring back the previous value.
+    function noteLocalSettingChange(field, value) {
+      if (pendingBundle && value !== undefined && value !== null) pendingBundle[field] = value;
+    }
+
+    // The server accepted a shared setting: keep the saved copy in step.
+    function patchCachedBundle(field, value) {
+      if (value === undefined || value === null) return;
+      var bundle = readCachedBundle();
+      if (!bundle) return;
+      bundle[field] = value;
+      writeCachedBundle(bundle);
+      if (!pendingBundle) renderedBundleSignature = bundleSignature(bundle);
+    }
+
+    function isEditingUi() {
+      var drawer = document.getElementById("drawer");
+      if (drawer && drawer.classList.contains("show")) return true;
+      return ["hazardSettingsModal", "columnWidthModal", "columnVisibilityModal"].some(function (id) {
+        var modal = document.getElementById(id);
+        return Boolean(modal && !modal.hidden);
+      });
+    }
+
+    function applyBundle(bundle, fromCache) {
+      var sequence = ++bundleApplySequence;
+      pendingBundle = bundle;
+      var run = function () {
+        if (sequence !== bundleApplySequence) return;
+        if (isEditingUi()) {
+          window.setTimeout(run, 400);
+          return;
+        }
+        pendingBundle = null;
+        renderedBundleSignature = bundleSignature(bundle);
+        // Hazard definitions first so rows are normalized and rendered with them.
+        applySharedHazardDefinitions(bundle.hazardDefinitions);
+        applyData(bundle.rows, fromCache);
+        if (bundle.columnWidths) applySharedColumnWidths(bundle.columnWidths);
+        if (bundle.columnVisibility) applySharedColumnVisibility(bundle.columnVisibility);
+      };
+      run();
+    }
+
+    function receiveLiveBundle(source) {
+      var bundle = normalizeBundle(source);
+      writeCachedBundle(bundle);
+      if (bundleSignature(bundle) === renderedBundleSignature) {
+        // Identical to what is already on screen: drop any older pending
+        // redraw and keep the page as it is.
+        bundleApplySequence += 1;
+        pendingBundle = null;
+        qrOpenedFromLiveData = true;
+        return bundle;
+      }
+      applyBundle(bundle, false);
+      return bundle;
+    }
+
+    function requestBootstrap() {
+      var early = window.sdsEarlyBootstrap;
+      window.sdsEarlyBootstrap = null;
+      var request;
+      if (early && early.apiUrl === apiUrl && early.request) {
+        request = early.request;
+      } else {
+        var requestUrl = new URL(apiUrl, window.location.href);
+        requestUrl.searchParams.set("action", "bootstrap");
+        requestUrl.searchParams.set("_", String(Date.now()));
+        request = fetch(requestUrl.toString(), {
+          method: "GET",
+          mode: "cors",
+          credentials: "omit",
+          cache: "no-store"
+        }).then(function (response) {
+          if (!response.ok) throw new Error("Apps Script bootstrap HTTP " + response.status);
+          return response.json();
+        });
+      }
+      return request.then(function (response) {
+        if (!response || response.ok === false || !response.data || !Array.isArray(response.data.rows)) {
+          throw new Error(response && response.error || "Bootstrap API unavailable");
+        }
+        return response.data;
+      });
+    }
 
     function loadFromAppsScript() {
       setConnectionStatus("เชื่อมต่อ Google Sheet / Drive", "Connected to Google Sheets / Drive");
@@ -19602,7 +19804,9 @@
         });
     }
 
-    function loadFromRemoteApi() {
+    // Backends deployed before action=bootstrap existed: the four original
+    // requests, in parallel.
+    function loadLegacyBundle() {
       var requestUrl = new URL(apiUrl, window.location.href);
       requestUrl.searchParams.set("action", "api");
       requestUrl.searchParams.set("_", String(Date.now()));
@@ -19626,13 +19830,25 @@
         });
       return Promise.all([dataPromise, loadSharedColumnWidthsSafely(), loadSharedColumnVisibilitySafely(), loadSharedHazardDefinitionsSafely()])
         .then(function (results) {
-          // Hazard definitions first so rows are normalized and rendered with them.
-          applySharedHazardDefinitions(results[3]);
-          applyData(results[0].data || []);
-          if (results[1]) applySharedColumnWidths(results[1]);
-          if (results[2]) applySharedColumnVisibility(results[2]);
+          return {
+            rows: results[0].data || [],
+            columnWidths: results[1],
+            columnVisibility: results[2],
+            hazardDefinitions: results[3]
+          };
+        });
+    }
+
+    function loadFromRemoteApi() {
+      return requestBootstrap()
+        .catch(function (error) {
+          console.warn("Bootstrap request unavailable; using the individual API calls", error);
+          return loadLegacyBundle();
+        })
+        .then(function (bundle) {
+          bundle = receiveLiveBundle(bundle);
           setConnectionStatus();
-          return results[0].data || [];
+          return bundle.rows;
         });
     }
 
@@ -19703,6 +19919,14 @@
     }
 
     function postRemote(payload) {
+      return postRemoteResponse(payload).then(function (response) {
+        return response.data;
+      });
+    }
+
+    // Like postRemote but resolves with the whole response, which for save and
+    // delete also carries the fresh bootstrap bundle from newer backends.
+    function postRemoteResponse(payload) {
       return fetch(apiUrl, {
         method: "POST",
         mode: "cors",
@@ -19716,8 +19940,18 @@
         if (!response || response.ok === false) {
           throw new Error(response && response.error || "ระบบไม่ยอมรับการบันทึกข้อมูล");
         }
-        return response.data;
+        return response;
       });
+    }
+
+    // After a save/delete: use the rows the server sent back; older backends
+    // send none, so reload as before.
+    function refreshAfterWrite(response) {
+      if (response && response.bootstrap && Array.isArray(response.bootstrap.rows)) {
+        receiveLiveBundle(response.bootstrap);
+        return;
+      }
+      setTimeout(function () { loadFromRemoteApi().catch(function (error) { alert(error.message); }); }, 900);
     }
 
     var isSavingSds = false;
@@ -19751,10 +19985,10 @@
             })
             .saveSds(record, fileData, window.sdsEditPassword || "");
         } else {
-          await postRemote({ action: "save", record: record, file: fileData, password: window.sdsEditPassword || "" });
+          var saveResponse = await postRemoteResponse({ action: "save", record: record, file: fileData, password: window.sdsEditPassword || "" });
           isSavingSds = false;
           closeDrawer();
-          setTimeout(function () { loadFromRemoteApi().catch(function (error) { alert(error.message); }); }, 900);
+          refreshAfterWrite(saveResponse);
         }
       } catch (error) {
         isSavingSds = false;
@@ -19777,8 +20011,8 @@
           .deleteSds(id, password);
       } else {
         try {
-          await postRemote({ action: "delete", id: id, password: password });
-          setTimeout(function () { loadFromRemoteApi().catch(function (error) { alert(error.message); }); }, 900);
+          var deleteResponse = await postRemoteResponse({ action: "delete", id: id, password: password });
+          refreshAfterWrite(deleteResponse);
         } catch (error) {
           alert(error.message || "ลบข้อมูลไม่สำเร็จ");
         }
@@ -19862,6 +20096,8 @@
       loadFromAppsScript();
     } else if (isRemote) {
       applyPublicMode();
+      var cachedBundle = readCachedBundle();
+      if (cachedBundle) applyBundle(cachedBundle, true);
       loadFromRemoteApi().catch(function (error) {
         console.error(error);
         setConnectionStatus("โหลดข้อมูลจาก Apps Script ไม่สำเร็จ", "Apps Script data loading failed");

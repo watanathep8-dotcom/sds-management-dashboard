@@ -64,11 +64,40 @@ var COLUMN_WIDTH_LIMITS = {
 // dashboard; edits and deletes still require an administrator session.
 var SAMPLE_ROWS = [];
 
+// Read cache. Every successful write (SDS save/delete, table settings, hazard
+// settings, admin bulk functions) stores a new random data version in Script
+// Properties together with the change. Cached payloads are keyed by that
+// version, so a write makes every older cache entry unreachable at once and a
+// reader can never be handed data from before the last write. Values are
+// chunked to stay below the CacheService 100 KB per-key limit.
+var DATA_VERSION_PROPERTY = "SDS_DATA_VERSION";
+var BOOTSTRAP_CACHE_PREFIX = "SDS_BOOT1_";
+// Expiry bounds how long a manual edit made directly in the Google Sheet (which
+// does not bump the version) can stay hidden. keepWarm() refreshes the cache
+// every 10 minutes when its trigger is installed.
+var BOOTSTRAP_CACHE_SECONDS = 900;
+// 30,000 UTF-16 code units are at most 90,000 UTF-8 bytes, below the 100 KB cap.
+var BOOTSTRAP_CACHE_CHUNK_CHARS = 30000;
+var BOOTSTRAP_CACHE_MAX_CHUNKS = 50;
+var KEEP_WARM_HANDLER = "keepWarm";
+var KEEP_WARM_MINUTES = 10;
+// Set when the current execution changed SDS data or shared settings.
+var SDS_DATA_CHANGED_ = false;
+
 function doGet(e) {
   var params = (e && e.parameter) || {};
 
+  if (params.action === "bootstrap") {
+    // Rows + shared settings in one round trip for the dashboard start-up.
+    try {
+      return jsonResponse_({ ok: true, data: getBootstrap_() }, params.callback);
+    } catch (error) {
+      return jsonResponse_({ ok: false, error: error.message }, params.callback);
+    }
+  }
+
   if (params.action === "api") {
-    var response = { ok: true, data: listSds() };
+    var response = { ok: true, data: getBootstrap_().rows };
     return jsonResponse_(response, params.callback);
   }
 
@@ -99,6 +128,7 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  SDS_DATA_CHANGED_ = false;
   try {
     var body = (e && e.postData && e.postData.contents) || "{}";
     var payload = JSON.parse(body);
@@ -123,15 +153,186 @@ function doPost(e) {
       throw new Error("ไม่รองรับคำสั่งนี้ / Unsupported action.");
     }
 
-    return jsonResponse_({ ok: true, data: result });
+    var response = { ok: true, data: result };
+    if (SDS_DATA_CHANGED_) {
+      // Re-warm the cache for the new data version. Save/delete also hand the
+      // fresh rows + settings back so the browser needs no extra reload.
+      var bootstrap = refreshBootstrapCache_();
+      if (bootstrap && (action === "save" || action === "delete")) response.bootstrap = bootstrap;
+    }
+    return jsonResponse_(response);
   } catch (error) {
     return jsonResponse_({ ok: false, error: error.message });
   }
 }
 
+/**
+ * Rows plus every shared setting, as returned by action=bootstrap. Served from
+ * CacheService when an entry exists for the current data version; otherwise
+ * the sheet is read once and the cache is filled. Never takes a lock.
+ */
+function getBootstrap_() {
+  var props = PropertiesService.getScriptProperties().getProperties();
+  var version = dataVersionFrom_(props);
+  var cached = readBootstrapCache_(version);
+  if (cached) return cached;
+  var payload = buildBootstrap_(props, version, true);
+  writeBootstrapCache_(payload);
+  return payload;
+}
+
+// Public wrapper for google.script.run.
+function getBootstrap() {
+  return getBootstrap_();
+}
+
+function dataVersionFrom_(props) {
+  return String((props && props[DATA_VERSION_PROPERTY]) || "0");
+}
+
+function buildBootstrap_(props, version, allowRepair) {
+  var rows = readSdsRows_(props, allowRepair);
+  if (!rows) return null;
+  return {
+    version: version,
+    rows: rows,
+    columnWidths: parseColumnWidths_(props[COLUMN_WIDTHS_PROPERTY]),
+    columnVisibility: parseColumnVisibility_(props[COLUMN_VISIBILITY_PROPERTY]),
+    hazardDefinitions: parseHazardDefinitions_(props[HAZARD_DEFINITIONS_PROPERTY])
+  };
+}
+
+function bootstrapCacheKey_(version, part) {
+  return BOOTSTRAP_CACHE_PREFIX + String(version).replace(/[^0-9A-Za-z_-]/g, "") + "_" + part;
+}
+
+function readBootstrapCache_(version) {
+  try {
+    var cache = CacheService.getScriptCache();
+    var meta = String(cache.get(bootstrapCacheKey_(version, "meta")) || "").split(":");
+    var count = Number(meta[0]);
+    var length = Number(meta[1]);
+    if (!(count >= 1 && count <= BOOTSTRAP_CACHE_MAX_CHUNKS) || !(length > 0)) return null;
+    var keys = [];
+    for (var i = 0; i < count; i++) keys.push(bootstrapCacheKey_(version, i));
+    var parts = cache.getAll(keys) || {};
+    var text = "";
+    for (var j = 0; j < keys.length; j++) {
+      if (typeof parts[keys[j]] !== "string") return null;
+      text += parts[keys[j]];
+    }
+    if (text.length !== length) return null;
+    var payload = JSON.parse(text);
+    if (!payload || payload.version !== version || !Array.isArray(payload.rows)) return null;
+    return payload;
+  } catch (error) {
+    console.warn("Bootstrap cache read failed: " + error.message);
+    return null;
+  }
+}
+
+function writeBootstrapCache_(payload) {
+  if (!payload) return false;
+  try {
+    var text = JSON.stringify(payload);
+    var chunks = [];
+    var start = 0;
+    while (start < text.length) {
+      var end = Math.min(text.length, start + BOOTSTRAP_CACHE_CHUNK_CHARS);
+      // Never split a UTF-16 surrogate pair across two cache values.
+      var code = text.charCodeAt(end - 1);
+      if (end < text.length && code >= 0xD800 && code <= 0xDBFF) end -= 1;
+      chunks.push(text.slice(start, end));
+      start = end;
+    }
+    if (!chunks.length || chunks.length > BOOTSTRAP_CACHE_MAX_CHUNKS) return false;
+    var values = {};
+    chunks.forEach(function(chunk, index) {
+      values[bootstrapCacheKey_(payload.version, index)] = chunk;
+    });
+    var cache = CacheService.getScriptCache();
+    cache.putAll(values, BOOTSTRAP_CACHE_SECONDS);
+    cache.put(bootstrapCacheKey_(payload.version, "meta"), chunks.length + ":" + text.length, BOOTSTRAP_CACHE_SECONDS);
+    return true;
+  } catch (error) {
+    // Caching is only an optimisation; the response is still served.
+    console.warn("Bootstrap cache write skipped: " + error.message);
+    return false;
+  }
+}
+
+// Called right after a write. Rebuilds the payload for the new version.
+function refreshBootstrapCache_() {
+  try {
+    var props = PropertiesService.getScriptProperties().getProperties();
+    var payload = buildBootstrap_(props, dataVersionFrom_(props), true);
+    writeBootstrapCache_(payload);
+    return payload;
+  } catch (error) {
+    console.warn("Bootstrap refresh after write failed: " + error.message);
+    return null;
+  }
+}
+
+/**
+ * Records that SDS data or shared settings changed. The new data version is
+ * stored in the same Script Properties call as any setting being saved, so a
+ * reader sees either the old value with the old version or the new value
+ * with the new version. Sheet writes are flushed first so readers holding the
+ * new version always read the updated sheet.
+ */
+function markDataChanged_(extraProperties, sheetChanged) {
+  if (sheetChanged) SpreadsheetApp.flush();
+  var values = extraProperties || {};
+  values[DATA_VERSION_PROPERTY] = new Date().getTime().toString(36) + "-" +
+    Utilities.getUuid().replace(/[^0-9A-Za-z]/g, "").slice(0, 12);
+  PropertiesService.getScriptProperties().setProperties(values);
+  SDS_DATA_CHANGED_ = true;
+}
+
+/**
+ * Time-driven trigger target: re-reads the sheet and refreshes the read
+ * cache for the current data version so visitors rarely hit a cold cache.
+ * It only reads the Sheet and Script Properties and writes nothing but the
+ * cache (if the sheet layout needs repair it skips instead of fixing it).
+ */
+function keepWarm() {
+  var props = PropertiesService.getScriptProperties().getProperties();
+  var version = dataVersionFrom_(props);
+  var payload = buildBootstrap_(props, version, false);
+  var cached = writeBootstrapCache_(payload);
+  return { version: version, rows: payload ? payload.rows.length : 0, cached: cached };
+}
+
+/** Run once from the editor. Safe to run again: keeps exactly one trigger. */
+function installKeepWarmTrigger() {
+  var existing = ScriptApp.getProjectTriggers().filter(function(trigger) {
+    return trigger.getHandlerFunction() === KEEP_WARM_HANDLER;
+  });
+  existing.slice(1).forEach(function(trigger) { ScriptApp.deleteTrigger(trigger); });
+  if (!existing.length) {
+    ScriptApp.newTrigger(KEEP_WARM_HANDLER).timeBased().everyMinutes(KEEP_WARM_MINUTES).create();
+  }
+  var warm = keepWarm();
+  return { installed: !existing.length, triggers: 1, warm: warm };
+}
+
+function removeKeepWarmTrigger() {
+  var removed = 0;
+  ScriptApp.getProjectTriggers().forEach(function(trigger) {
+    if (trigger.getHandlerFunction() === KEEP_WARM_HANDLER) {
+      ScriptApp.deleteTrigger(trigger);
+      removed += 1;
+    }
+  });
+  return { removed: removed };
+}
+
 function getColumnWidths_() {
-  var properties = PropertiesService.getScriptProperties();
-  var raw = properties.getProperty(COLUMN_WIDTHS_PROPERTY);
+  return parseColumnWidths_(PropertiesService.getScriptProperties().getProperty(COLUMN_WIDTHS_PROPERTY));
+}
+
+function parseColumnWidths_(raw) {
   var saved = {};
   if (raw) {
     try { saved = JSON.parse(raw) || {}; } catch (ignored) { saved = {}; }
@@ -166,10 +367,9 @@ function saveColumnWidths_(widths) {
 
   // Deliberately store only the validated layout object. This endpoint does
   // not accept SDS records, files, or arbitrary Script Properties.
-  PropertiesService.getScriptProperties().setProperty(
-    COLUMN_WIDTHS_PROPERTY,
-    JSON.stringify(normalized)
-  );
+  var values = {};
+  values[COLUMN_WIDTHS_PROPERTY] = JSON.stringify(normalized);
+  markDataChanged_(values);
   return normalized;
 }
 
@@ -178,8 +378,10 @@ function saveColumnWidths(widths) {
 }
 
 function getColumnVisibility_() {
-  var properties = PropertiesService.getScriptProperties();
-  var raw = properties.getProperty(COLUMN_VISIBILITY_PROPERTY);
+  return parseColumnVisibility_(PropertiesService.getScriptProperties().getProperty(COLUMN_VISIBILITY_PROPERTY));
+}
+
+function parseColumnVisibility_(raw) {
   var saved = {};
   if (raw) {
     try { saved = JSON.parse(raw) || {}; } catch (ignored) { saved = {}; }
@@ -215,10 +417,9 @@ function saveColumnVisibility_(visibility) {
     throw new Error("ต้องแสดงอย่างน้อย 1 หัวข้อ / At least one heading must remain visible.");
   }
 
-  PropertiesService.getScriptProperties().setProperty(
-    COLUMN_VISIBILITY_PROPERTY,
-    JSON.stringify(normalized)
-  );
+  var values = {};
+  values[COLUMN_VISIBILITY_PROPERTY] = JSON.stringify(normalized);
+  markDataChanged_(values);
   return normalized;
 }
 
@@ -227,7 +428,10 @@ function saveColumnVisibility(visibility) {
 }
 
 function getHazardDefinitions_() {
-  var raw = PropertiesService.getScriptProperties().getProperty(HAZARD_DEFINITIONS_PROPERTY);
+  return parseHazardDefinitions_(PropertiesService.getScriptProperties().getProperty(HAZARD_DEFINITIONS_PROPERTY));
+}
+
+function parseHazardDefinitions_(raw) {
   if (!raw) return [];
   try {
     var saved = JSON.parse(raw);
@@ -284,7 +488,9 @@ function saveHazardDefinitions_(definitions) {
     throw new Error("ข้อมูล Hazard ยาวเกินกว่าที่บันทึกได้ / Hazard settings are too large to store.");
   }
 
-  PropertiesService.getScriptProperties().setProperty(HAZARD_DEFINITIONS_PROPERTY, json);
+  var values = {};
+  values[HAZARD_DEFINITIONS_PROPERTY] = json;
+  markDataChanged_(values);
   return normalized;
 }
 
@@ -348,6 +554,7 @@ function clearRecorderAndDateOfUse() {
     var column = SDS_HEADERS.indexOf(header) + 1;
     sheet.getRange(2, column, rowCount, 1).setValues(blank);
   });
+  markDataChanged_(null, true);
   console.log("Cleared recorder and dateOfUse on " + rowCount + " rows.");
   return rowCount;
 }
@@ -459,6 +666,7 @@ function migrateCatalogFromGithub() {
     sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAppend.length, SDS_HEADERS.length).setValues(rowsToAppend);
   }
   sheet.autoResizeColumns(1, SDS_HEADERS.length);
+  markDataChanged_(null, true);
 
   return {
     imported: imported,
@@ -471,14 +679,50 @@ function migrateCatalogFromGithub() {
 }
 
 function listSds() {
-  var sheet = getSheet_();
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return [];
+  return readSdsRows_(PropertiesService.getScriptProperties().getProperties(), true);
+}
 
-  var values = sheet.getRange(2, 1, lastRow - 1, SDS_HEADERS.length).getValues();
+/**
+ * Reads the header and every data row with a single getValues() call.
+ * With allowRepair the sheet layout is fixed exactly like getSheet_() does;
+ * without it (keepWarm) null is returned instead of writing anything.
+ */
+function readSdsRows_(props, allowRepair) {
+  var id = props && props.SDS_SPREADSHEET_ID;
+  if (!id) throw new Error("ยังไม่ได้ตั้งค่าระบบ กรุณารัน setupSystem() ก่อน");
+  var sheet = SpreadsheetApp.openById(id).getSheetByName("SDS");
+  if (sheet.getMaxColumns() < SDS_HEADERS.length) {
+    if (!allowRepair) return null;
+    sheet = getSheet_();
+  }
+  var lastRow = sheet.getLastRow();
+  var values = sheet.getRange(1, 1, Math.max(lastRow, 1), SDS_HEADERS.length).getValues();
+  if (values[0].join("|") !== SDS_HEADERS.join("|")) {
+    if (!allowRepair) return null;
+    sheet.getRange(1, 1, 1, SDS_HEADERS.length).setValues([SDS_HEADERS]);
+  }
+  return dataRowsToObjects_(values.slice(1));
+}
+
+function dataRowsToObjects_(values) {
   return values.filter(function(row) {
     return row[0] !== "" && row[0] !== null;
   }).map(rowToObject_);
+}
+
+// All data rows (row 2..last) in one read; used by writes under the lock.
+function readDataRows_(sheet) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  return sheet.getRange(2, 1, lastRow - 1, SDS_HEADERS.length).getValues();
+}
+
+function findRowInValues_(values, id) {
+  var target = String(id || "");
+  for (var i = 0; i < values.length; i++) {
+    if (String(values[i][0]) === target) return i + 2;
+  }
+  return null;
 }
 
 /**
@@ -506,12 +750,15 @@ function saveSds(record, fileData, password) {
 
   try {
     var sheet = getSheet_();
+    // Read every data row once; lookups below use this snapshot (the script
+    // lock is held, so it cannot change underneath us).
+    var dataValues = readDataRows_(sheet);
     var requestedId = clean_(record && record.id);
-    var existing = findRowById_(sheet, requestedId);
+    var existing = findRowInValues_(dataValues, requestedId);
     if (existing) {
       // A client that omits a field (e.g. one the edit form has no input for)
       // must not wipe the stored value.
-      var stored = rowToObject_(sheet.getRange(existing, 1, 1, SDS_HEADERS.length).getValues()[0]);
+      var stored = rowToObject_(dataValues[existing - 2]);
       record = Object.assign({}, record);
       Object.keys(stored).forEach(function(key) {
         if (record[key] === undefined) record[key] = stored[key];
@@ -521,13 +768,13 @@ function saveSds(record, fileData, password) {
       throw new Error("ยังไม่เปิดให้ผู้ใช้ทั่วไปบันทึกข้อมูล SDS / Public SDS writing is disabled");
     }
     var normalized = normalizeRecord_(record);
-    existing = existing || findRowById_(sheet, normalized.id);
+    existing = existing || findRowInValues_(dataValues, normalized.id);
     // Updating an existing record requires the shared password (same as
     // deletion); creating a new record does not. Administrators are exempt.
     if (existing && !isAdmin_()) {
       assertActionPassword_(password);
     }
-    var oldRow = existing ? sheet.getRange(existing, 1, 1, SDS_HEADERS.length).getValues()[0] : null;
+    var oldRow = existing ? dataValues[existing - 2] : null;
     var pdfFileId = oldRow ? String(oldRow[9] || "") : "";
     var pdfName = oldRow ? String(oldRow[10] || "") : "";
     var thaiPdfFileId = oldRow ? String(oldRow[20] || "") : "";
@@ -608,6 +855,7 @@ function saveSds(record, fileData, password) {
     } else {
       sheet.appendRow(row);
     }
+    markDataChanged_(null, true);
 
     return rowToObject_(row);
   } finally {
@@ -621,15 +869,17 @@ function deleteSds(id, password) {
     throw new Error("ไม่มีสิทธิ์แก้ไขข้อมูล กรุณาเปิด Apps Script ด้วยบัญชีผู้ดูแลระบบ");
   }
   var sheet = getSheet_();
-  var rowNumber = findRowById_(sheet, id);
+  var dataValues = readDataRows_(sheet);
+  var rowNumber = findRowInValues_(dataValues, id);
   if (!rowNumber) return { deleted: false };
 
-  var row = sheet.getRange(rowNumber, 1, 1, SDS_HEADERS.length).getValues()[0];
+  var row = dataValues[rowNumber - 2];
   var fileIds = [row[9], row[20], row[22]].map(function(value) { return String(value || "").trim(); });
   fileIds.filter(function(fileId, index) { return fileId && fileIds.indexOf(fileId) === index; }).forEach(function(fileId) {
     try { DriveApp.getFileById(fileId).setTrashed(true); } catch (ignored) {}
   });
   sheet.deleteRow(rowNumber);
+  markDataChanged_(null, true);
   return { deleted: true };
 }
 
